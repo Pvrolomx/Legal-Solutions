@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 
 interface Case {
@@ -28,6 +28,13 @@ interface Task {
   status: string;
 }
 
+interface Client {
+  id: string;
+  name: string;
+  phone: string;
+  email: string | null;
+}
+
 const CASE_TYPES: Record<string, string> = {
   civil: 'Civil',
   penal: 'Penal',
@@ -40,27 +47,65 @@ const CASE_TYPES: Record<string, string> = {
 
 export default function Dashboard() {
   const [cases, setCases] = useState<Case[]>([]);
+  const [allCases, setAllCases] = useState<Case[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [hearings, setHearings] = useState<Hearing[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [stats, setStats] = useState({ total: 0, activos: 0, audienciasHoy: 0, tareasPendientes: 0 });
   const [loading, setLoading] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
+  
+  // Search states
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<{cases: Case[], clients: Client[]}>({ cases: [], clients: [] });
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadDashboard();
   }, []);
 
+  useEffect(() => {
+    if (showSearch && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [showSearch]);
+
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      const filteredCases = allCases.filter(c => 
+        c.matter.toLowerCase().includes(query) ||
+        c.client.name.toLowerCase().includes(query) ||
+        (c.caseNumber && c.caseNumber.toLowerCase().includes(query))
+      );
+      const filteredClients = clients.filter(c =>
+        c.name.toLowerCase().includes(query) ||
+        c.phone.includes(query) ||
+        (c.email && c.email.toLowerCase().includes(query))
+      );
+      setSearchResults({ cases: filteredCases.slice(0, 5), clients: filteredClients.slice(0, 5) });
+    } else {
+      setSearchResults({ cases: [], clients: [] });
+    }
+  }, [searchQuery, allCases, clients]);
+
   const loadDashboard = async () => {
     try {
-      const [casesRes, hearingsRes, tasksRes] = await Promise.all([
-        fetch('/api/cases?limit=5'),
+      const [casesRes, hearingsRes, tasksRes, clientsRes] = await Promise.all([
+        fetch('/api/cases?limit=50'),
         fetch('/api/hearings/upcoming'),
         fetch('/api/tasks?status=pendiente&limit=5'),
+        fetch('/api/clients'),
       ]);
       const casesData = await casesRes.json();
       const hearingsData = await hearingsRes.json();
       const tasksData = await tasksRes.json();
-      setCases(casesData.cases || []);
+      const clientsData = await clientsRes.json();
+      
+      setAllCases(casesData.cases || []);
+      setCases((casesData.cases || []).slice(0, 5));
+      setClients(clientsData || []);
       setHearings(hearingsData.hearings || []);
       setTasks(tasksData.tasks || []);
       setStats({
@@ -73,6 +118,12 @@ export default function Dashboard() {
       console.error('Error loading dashboard:', e);
     }
     setLoading(false);
+  };
+
+  const closeSearch = () => {
+    setShowSearch(false);
+    setSearchQuery('');
+    setSearchResults({ cases: [], clients: [] });
   };
 
   if (loading) {
@@ -88,6 +139,84 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {/* Search Overlay */}
+      {showSearch && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center pt-20 px-4" onClick={closeSearch}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3 p-4 border-b">
+              <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Buscar casos, clientes..."
+                className="flex-1 text-lg outline-none"
+              />
+              <button onClick={closeSearch} className="p-1 hover:bg-slate-100 rounded">
+                <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {searchQuery && (
+              <div className="max-h-96 overflow-y-auto">
+                {searchResults.cases.length > 0 && (
+                  <div className="p-3">
+                    <p className="text-xs font-semibold text-slate-400 uppercase mb-2 px-2">Casos</p>
+                    {searchResults.cases.map(c => (
+                      <Link href={`/casos/${c.id}`} key={c.id} onClick={closeSearch}
+                        className="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-lg">
+                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <span>📁</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-slate-800">{c.matter}</p>
+                          <p className="text-sm text-slate-500">{c.client.name} • {c.caseNumber || 'Sin expediente'}</p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+                
+                {searchResults.clients.length > 0 && (
+                  <div className="p-3 border-t">
+                    <p className="text-xs font-semibold text-slate-400 uppercase mb-2 px-2">Clientes</p>
+                    {searchResults.clients.map(c => (
+                      <Link href={`/clientes/${c.id}`} key={c.id} onClick={closeSearch}
+                        className="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-lg">
+                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                          <span>👤</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-slate-800">{c.name}</p>
+                          <p className="text-sm text-slate-500">{c.phone} {c.email && `• ${c.email}`}</p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+                
+                {searchResults.cases.length === 0 && searchResults.clients.length === 0 && (
+                  <div className="p-8 text-center">
+                    <span className="text-4xl block mb-2">🔍</span>
+                    <p className="text-slate-500">No se encontraron resultados</p>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {!searchQuery && (
+              <div className="p-6 text-center text-slate-400">
+                <p>Escribe para buscar casos o clientes</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       {/* Header */}
       <header className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
@@ -104,6 +233,16 @@ export default function Dashboard() {
             
             {/* Desktop Nav */}
             <nav className="hidden md:flex items-center gap-2">
+              {/* Search Button */}
+              <button 
+                onClick={() => setShowSearch(true)}
+                className="p-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition"
+                title="Buscar"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </button>
               <Link href="/casos" className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/10 transition">
                 📁 Casos
               </Link>
@@ -118,12 +257,23 @@ export default function Dashboard() {
               </Link>
             </nav>
 
-            {/* Mobile Menu Button */}
-            <button onClick={() => setShowMenu(!showMenu)} className="md:hidden p-2 rounded-lg hover:bg-white/10">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
+            {/* Mobile: Search + Menu */}
+            <div className="flex items-center gap-2 md:hidden">
+              <button 
+                onClick={() => setShowSearch(true)}
+                className="p-2 rounded-lg hover:bg-white/10"
+                title="Buscar"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </button>
+              <button onClick={() => setShowMenu(!showMenu)} className="p-2 rounded-lg hover:bg-white/10">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           {/* Mobile Menu */}
@@ -137,7 +287,6 @@ export default function Dashboard() {
           )}
         </div>
       </header>
-
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Welcome Banner */}
         <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 rounded-2xl p-6 sm:p-8 mb-8 text-white shadow-xl">

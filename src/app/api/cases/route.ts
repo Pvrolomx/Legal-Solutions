@@ -7,9 +7,19 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const limit = parseInt(searchParams.get('limit') || '50');
   const status = searchParams.get('status');
+  const search = searchParams.get('search');
   
   const where: any = {};
   if (status) where.status = status;
+  
+  if (search) {
+    where.OR = [
+      { matter: { contains: search, mode: 'insensitive' } },
+      { caseNumber: { contains: search, mode: 'insensitive' } },
+      { description: { contains: search, mode: 'insensitive' } },
+      { client: { name: { contains: search, mode: 'insensitive' } } },
+    ];
+  }
   
   const cases = await prisma.case.findMany({
     where,
