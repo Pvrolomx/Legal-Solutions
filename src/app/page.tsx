@@ -1,528 +1,267 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
-interface Case {
-  id: string;
-  caseNumber: string | null;
-  matter: string;
-  caseType: string;
-  status: string;
-  client: { name: string };
-}
+interface Client { id: string; name: string; phone: string; email: string | null; }
+interface Case { id: string; matter: string; caseNumber: string | null; status: string; client: { name: string }; }
 
-interface Hearing {
-  id: string;
-  date: string;
-  time: string;
-  type: string;
-  case: { matter: string; client: { name: string } };
-}
-
-interface Task {
-  id: string;
-  title: string;
-  dueDate: string | null;
-  priority: string;
-  status: string;
-}
-
-interface Client {
-  id: string;
-  name: string;
-  phone: string;
-  email: string | null;
-}
-
-const CASE_TYPES: Record<string, string> = {
-  civil: 'Civil',
-  penal: 'Penal',
-  familiar: 'Familiar',
-  mercantil: 'Mercantil',
-  laboral: 'Laboral',
-  amparo: 'Amparo',
-  administrativo: 'Administrativo',
-};
-
-export default function Dashboard() {
-  const [cases, setCases] = useState<Case[]>([]);
-  const [allCases, setAllCases] = useState<Case[]>([]);
+export default function HomePage() {
+  const [activeSection, setActiveSection] = useState<string | null>(null);
   const [clients, setClients] = useState<Client[]>([]);
-  const [hearings, setHearings] = useState<Hearing[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [stats, setStats] = useState({ total: 0, activos: 0, audienciasHoy: 0, tareasPendientes: 0 });
-  const [loading, setLoading] = useState(true);
-  const [showMenu, setShowMenu] = useState(false);
-  
-  // Search states
-  const [showSearch, setShowSearch] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<{cases: Case[], clients: Client[]}>({ cases: [], clients: [] });
-  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [cases, setCases] = useState<Case[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    loadDashboard();
-  }, []);
-
-  useEffect(() => {
-    if (showSearch && searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  }, [showSearch]);
-
-  useEffect(() => {
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      const filteredCases = allCases.filter(c => 
-        c.matter.toLowerCase().includes(query) ||
-        c.client.name.toLowerCase().includes(query) ||
-        (c.caseNumber && c.caseNumber.toLowerCase().includes(query))
-      );
-      const filteredClients = clients.filter(c =>
-        c.name.toLowerCase().includes(query) ||
-        c.phone.includes(query) ||
-        (c.email && c.email.toLowerCase().includes(query))
-      );
-      setSearchResults({ cases: filteredCases.slice(0, 5), clients: filteredClients.slice(0, 5) });
-    } else {
-      setSearchResults({ cases: [], clients: [] });
-    }
-  }, [searchQuery, allCases, clients]);
-
-  const loadDashboard = async () => {
-    try {
-      const [casesRes, hearingsRes, tasksRes, clientsRes] = await Promise.all([
-        fetch('/api/cases?limit=50'),
-        fetch('/api/hearings/upcoming'),
-        fetch('/api/tasks?status=pendiente&limit=5'),
-        fetch('/api/clients'),
-      ]);
-      const casesData = await casesRes.json();
-      const hearingsData = await hearingsRes.json();
-      const tasksData = await tasksRes.json();
-      const clientsData = await clientsRes.json();
-      
-      setAllCases(casesData.cases || []);
-      setCases((casesData.cases || []).slice(0, 5));
-      setClients(clientsData || []);
-      setHearings(hearingsData.hearings || []);
-      setTasks(tasksData.tasks || []);
-      setStats({
-        total: casesData.total || 0,
-        activos: casesData.activos || 0,
-        audienciasHoy: hearingsData.today || 0,
-        tareasPendientes: tasksData.total || 0,
-      });
-    } catch (e) {
-      console.error('Error loading dashboard:', e);
+  const loadData = async (section: string) => {
+    setLoading(true);
+    if (section === 'cliente') {
+      const res = await fetch('/api/clients');
+      setClients(await res.json() || []);
+    } else if (section === 'expediente') {
+      const res = await fetch('/api/cases?limit=20');
+      const data = await res.json();
+      setCases(data.cases || []);
     }
     setLoading(false);
   };
 
-  const closeSearch = () => {
-    setShowSearch(false);
-    setSearchQuery('');
-    setSearchResults({ cases: [], clients: [] });
+  const handleSectionClick = async (section: string) => {
+    if (activeSection === section) {
+      setActiveSection(null);
+    } else {
+      setActiveSection(section);
+      if (section === 'cliente' || section === 'expediente') {
+        await loadData(section);
+      }
+    }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-400">Cargando...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Search Overlay */}
-      {showSearch && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center pt-20 px-4" onClick={closeSearch}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center gap-3 p-4 border-b">
-              <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                ref={searchInputRef}
-                type="text"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Buscar casos, clientes..."
-                className="flex-1 text-lg outline-none"
-              />
-              <button onClick={closeSearch} className="p-1 hover:bg-slate-100 rounded">
-                <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            
-            {searchQuery && (
-              <div className="max-h-96 overflow-y-auto">
-                {searchResults.cases.length > 0 && (
-                  <div className="p-3">
-                    <p className="text-xs font-semibold text-slate-400 uppercase mb-2 px-2">Casos</p>
-                    {searchResults.cases.map(c => (
-                      <Link href={`/casos/${c.id}`} key={c.id} onClick={closeSearch}
-                        className="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-lg">
-                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <span>📁</span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-slate-800">{c.matter}</p>
-                          <p className="text-sm text-slate-500">{c.client.name} • {c.caseNumber || 'Sin expediente'}</p>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-                
-                {searchResults.clients.length > 0 && (
-                  <div className="p-3 border-t">
-                    <p className="text-xs font-semibold text-slate-400 uppercase mb-2 px-2">Clientes</p>
-                    {searchResults.clients.map(c => (
-                      <Link href={`/clientes/${c.id}`} key={c.id} onClick={closeSearch}
-                        className="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-lg">
-                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                          <span>👤</span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-slate-800">{c.name}</p>
-                          <p className="text-sm text-slate-500">{c.phone} {c.email && `• ${c.email}`}</p>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-                
-                {searchResults.cases.length === 0 && searchResults.clients.length === 0 && (
-                  <div className="p-8 text-center">
-                    <span className="text-4xl block mb-2">🔍</span>
-                    <p className="text-slate-500">No se encontraron resultados</p>
-                  </div>
-                )}
-              </div>
-            )}
-            
-            {!searchQuery && (
-              <div className="p-6 text-center text-slate-400">
-                <p>Escribe para buscar casos o clientes</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Header */}
-      <header className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-amber-600 rounded-xl flex items-center justify-center shadow-lg">
-                <span className="text-2xl">⚖️</span>
-              </div>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight">LEGAL <span className="font-light text-blue-400">Solutions</span></h1>
-                <p className="text-xs text-slate-400 hidden sm:block">Sistema de Gestión Legal</p>
-              </div>
-            </div>
-            
-            {/* Desktop Nav */}
-            <nav className="hidden md:flex items-center gap-2">
-              {/* Search Button */}
-              <button 
-                onClick={() => setShowSearch(true)}
-                className="p-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition"
-                title="Buscar"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </button>
-              <Link href="/casos" className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/10 transition">
-                📁 Casos
-              </Link>
-              <Link href="/clientes" className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/10 transition">
-                👥 Clientes
-              </Link>
-              <Link href="/agenda" className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-white/10 transition">
-                📅 Agenda
-              </Link>
-              <Link href="/ai" className="ml-2 px-5 py-2.5 rounded-lg text-sm font-semibold bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 shadow-lg shadow-blue-500/25 transition">
-                🤖 Asistente IA
-              </Link>
-            </nav>
-
-            {/* Mobile: Search + Menu */}
-            <div className="flex items-center gap-2 md:hidden">
-              <button 
-                onClick={() => setShowSearch(true)}
-                className="p-2 rounded-lg hover:bg-white/10"
-                title="Buscar"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </button>
-              <button onClick={() => setShowMenu(!showMenu)} className="p-2 rounded-lg hover:bg-white/10">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
-            </div>
+      <header className="pt-8 pb-4 px-6">
+        <div className="max-w-lg mx-auto text-center">
+          <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl shadow-amber-500/20">
+            <span className="text-4xl">⚖️</span>
           </div>
-
-          {/* Mobile Menu */}
-          {showMenu && (
-            <div className="md:hidden pb-4 space-y-2">
-              <Link href="/casos" className="block px-4 py-3 rounded-lg bg-white/5 hover:bg-white/10">📁 Casos</Link>
-              <Link href="/clientes" className="block px-4 py-3 rounded-lg bg-white/5 hover:bg-white/10">👥 Clientes</Link>
-              <Link href="/agenda" className="block px-4 py-3 rounded-lg bg-white/5 hover:bg-white/10">📅 Agenda</Link>
-              <Link href="/ai" className="block px-4 py-3 rounded-lg bg-blue-600 text-center font-semibold">🤖 Asistente IA</Link>
-            </div>
-          )}
+          <h1 className="text-3xl font-bold text-white tracking-tight">LEGAL <span className="font-light text-blue-400">Solutions</span></h1>
+          <p className="text-slate-400 text-sm mt-1">Sistema de Gestión Legal con IA</p>
         </div>
       </header>
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        {/* Welcome Banner */}
-        <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 rounded-2xl p-6 sm:p-8 mb-8 text-white shadow-xl">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h2 className="text-2xl sm:text-3xl font-bold mb-2">Bienvenido 👋</h2>
-              <p className="text-blue-100">Gestiona tus casos legales de manera inteligente</p>
-            </div>
-            <Link href="/ai" className="inline-flex items-center gap-2 bg-white text-blue-700 px-6 py-3 rounded-xl font-semibold hover:bg-blue-50 transition shadow-lg">
-              <span className="text-xl">🤖</span>
-              <span>Consultar Asistente IA</span>
-            </Link>
-          </div>
-        </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100 hover:shadow-md transition">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                <span className="text-2xl">📁</span>
-              </div>
-              <div>
-                <p className="text-sm text-slate-500">Total Casos</p>
-                <p className="text-2xl font-bold text-slate-800">{stats.total}</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100 hover:shadow-md transition">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                <span className="text-2xl">✅</span>
-              </div>
-              <div>
-                <p className="text-sm text-slate-500">Activos</p>
-                <p className="text-2xl font-bold text-green-600">{stats.activos}</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100 hover:shadow-md transition">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
-                <span className="text-2xl">🔔</span>
-              </div>
-              <div>
-                <p className="text-sm text-slate-500">Audiencias Hoy</p>
-                <p className="text-2xl font-bold text-amber-600">{stats.audienciasHoy}</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100 hover:shadow-md transition">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
-                <span className="text-2xl">📋</span>
-              </div>
-              <div>
-                <p className="text-sm text-slate-500">Tareas</p>
-                <p className="text-2xl font-bold text-red-600">{stats.tareasPendientes}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        {/* Quick Actions */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-          <Link href="/casos/nuevo" className="flex items-center gap-3 bg-white p-4 rounded-xl border border-slate-100 hover:border-blue-200 hover:shadow-md transition group">
-            <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center text-white group-hover:scale-110 transition">
-              <span className="text-lg">+</span>
-            </div>
-            <span className="font-medium text-slate-700">Nuevo Caso</span>
-          </Link>
-          <Link href="/clientes/nuevo" className="flex items-center gap-3 bg-white p-4 rounded-xl border border-slate-100 hover:border-green-200 hover:shadow-md transition group">
-            <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center text-white group-hover:scale-110 transition">
-              <span className="text-lg">+</span>
-            </div>
-            <span className="font-medium text-slate-700">Nuevo Cliente</span>
-          </Link>
-          <Link href="/agenda/nueva" className="flex items-center gap-3 bg-white p-4 rounded-xl border border-slate-100 hover:border-amber-200 hover:shadow-md transition group">
-            <div className="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center text-white group-hover:scale-110 transition">
-              <span className="text-lg">+</span>
-            </div>
-            <span className="font-medium text-slate-700">Nueva Audiencia</span>
-          </Link>
-          <Link href="/tareas/nueva" className="flex items-center gap-3 bg-white p-4 rounded-xl border border-slate-100 hover:border-purple-200 hover:shadow-md transition group">
-            <div className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center text-white group-hover:scale-110 transition">
-              <span className="text-lg">+</span>
-            </div>
-            <span className="font-medium text-slate-700">Nueva Tarea</span>
-          </Link>
-        </div>
+      {/* Main Grid */}
+      <main className="px-4 pb-8 max-w-lg mx-auto">
+        {!activeSection ? (
+          <div className="grid grid-cols-2 gap-4 mt-6">
+            {/* Cliente */}
+            <button onClick={() => handleSectionClick('cliente')}
+              className="aspect-square bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-3xl p-6 flex flex-col items-center justify-center shadow-xl shadow-emerald-500/20 hover:scale-105 transition-all duration-300 active:scale-95">
+              <span className="text-5xl mb-3">👤</span>
+              <span className="text-white font-bold text-lg">Cliente</span>
+              <span className="text-emerald-200 text-xs mt-1">Ver y agregar</span>
+            </button>
 
-        {/* Main Content Grid */}
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Recent Cases - Takes 2 columns */}
-          <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-100">
-            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-              <h2 className="font-semibold text-lg text-slate-800">📁 Casos Recientes</h2>
-              <Link href="/casos" className="text-blue-600 text-sm font-medium hover:underline">Ver todos →</Link>
-            </div>
-            <div className="divide-y divide-slate-100">
-              {cases.length === 0 ? (
-                <div className="p-12 text-center">
-                  <span className="text-5xl mb-4 block">📂</span>
-                  <p className="text-slate-500 mb-4">No hay casos registrados</p>
-                  <Link href="/casos/nuevo" className="inline-flex items-center gap-2 text-blue-600 font-medium hover:underline">
-                    <span>+</span> Crear primer caso
+            {/* Expediente */}
+            <button onClick={() => handleSectionClick('expediente')}
+              className="aspect-square bg-gradient-to-br from-blue-500 to-blue-700 rounded-3xl p-6 flex flex-col items-center justify-center shadow-xl shadow-blue-500/20 hover:scale-105 transition-all duration-300 active:scale-95">
+              <span className="text-5xl mb-3">📁</span>
+              <span className="text-white font-bold text-lg">Expediente</span>
+              <span className="text-blue-200 text-xs mt-1">Casos legales</span>
+            </button>
+
+            {/* Escrito */}
+            <button onClick={() => handleSectionClick('escrito')}
+              className="aspect-square bg-gradient-to-br from-purple-500 to-purple-700 rounded-3xl p-6 flex flex-col items-center justify-center shadow-xl shadow-purple-500/20 hover:scale-105 transition-all duration-300 active:scale-95">
+              <span className="text-5xl mb-3">📝</span>
+              <span className="text-white font-bold text-lg">Escrito</span>
+              <span className="text-purple-200 text-xs mt-1">Documentos</span>
+            </button>
+
+            {/* IA */}
+            <button onClick={() => handleSectionClick('ia')}
+              className="aspect-square bg-gradient-to-br from-amber-500 to-orange-600 rounded-3xl p-6 flex flex-col items-center justify-center shadow-xl shadow-amber-500/20 hover:scale-105 transition-all duration-300 active:scale-95">
+              <span className="text-5xl mb-3">🤖</span>
+              <span className="text-white font-bold text-lg">IA</span>
+              <span className="text-amber-200 text-xs mt-1">Asistente legal</span>
+            </button>
+          </div>
+        ) : (
+          <div className="mt-6 animate-fadeIn">
+            {/* Back button */}
+            <button onClick={() => setActiveSection(null)}
+              className="mb-4 flex items-center gap-2 text-slate-400 hover:text-white transition">
+              <span>←</span> <span>Volver</span>
+            </button>
+
+            {/* Cliente Section */}
+            {activeSection === 'cliente' && (
+              <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-6 border border-white/10">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center">
+                      <span className="text-2xl">👤</span>
+                    </div>
+                    <h2 className="text-xl font-bold text-white">Clientes</h2>
+                  </div>
+                  <Link href="/clientes/nuevo" className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-medium text-sm transition">
+                    + Nuevo
                   </Link>
                 </div>
-              ) : (
-                cases.map(c => (
-                  <Link href={`/casos/${c.id}`} key={c.id} className="p-4 flex justify-between items-center hover:bg-slate-50 transition group">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition">
-                        <span className="text-lg">📄</span>
-                      </div>
-                      <div>
-                        <p className="font-medium text-slate-800">{c.matter}</p>
-                        <p className="text-sm text-slate-500">{c.client.name} • {c.caseNumber || 'Sin expediente'}</p>
-                      </div>
+                
+                {loading ? (
+                  <p className="text-slate-400 text-center py-8">Cargando...</p>
+                ) : clients.length === 0 ? (
+                  <div className="text-center py-8">
+                    <span className="text-4xl block mb-2">📋</span>
+                    <p className="text-slate-400">No hay clientes</p>
+                    <Link href="/clientes/nuevo" className="text-emerald-400 font-medium mt-2 inline-block">Agregar primero</Link>
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-80 overflow-y-auto">
+                    {clients.map(c => (
+                      <Link href={`/clientes/${c.id}`} key={c.id}
+                        className="block p-4 bg-white/5 hover:bg-white/10 rounded-xl transition">
+                        <p className="font-medium text-white">{c.name}</p>
+                        <p className="text-sm text-slate-400">{c.phone} {c.email && `• ${c.email}`}</p>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Expediente Section */}
+            {activeSection === 'expediente' && (
+              <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-6 border border-white/10">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center">
+                      <span className="text-2xl">📁</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs px-3 py-1 rounded-full bg-slate-100 text-slate-600 font-medium">
-                        {CASE_TYPES[c.caseType] || c.caseType}
-                      </span>
-                      <span className={`text-xs px-3 py-1 rounded-full font-medium ${
-                        c.status === 'activo' ? 'bg-green-100 text-green-700' :
-                        c.status === 'suspendido' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-slate-100 text-slate-600'
-                      }`}>{c.status}</span>
-                    </div>
+                    <h2 className="text-xl font-bold text-white">Expedientes</h2>
+                  </div>
+                  <Link href="/casos/nuevo" className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium text-sm transition">
+                    + Nuevo
                   </Link>
-                ))
-              )}
-            </div>
-          </div>
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Upcoming Hearings */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-100">
-              <div className="px-5 py-4 border-b border-slate-100">
-                <h2 className="font-semibold text-slate-800">📅 Próximas Audiencias</h2>
-              </div>
-              <div className="p-4 space-y-3">
-                {hearings.length === 0 ? (
-                  <div className="text-center py-6">
-                    <span className="text-3xl block mb-2">📆</span>
-                    <p className="text-slate-400 text-sm">Sin audiencias próximas</p>
+                </div>
+                
+                {loading ? (
+                  <p className="text-slate-400 text-center py-8">Cargando...</p>
+                ) : cases.length === 0 ? (
+                  <div className="text-center py-8">
+                    <span className="text-4xl block mb-2">📂</span>
+                    <p className="text-slate-400">No hay expedientes</p>
+                    <Link href="/casos/nuevo" className="text-blue-400 font-medium mt-2 inline-block">Crear primero</Link>
                   </div>
                 ) : (
-                  hearings.slice(0, 3).map(h => (
-                    <div key={h.id} className="p-3 bg-gradient-to-r from-slate-50 to-slate-100 rounded-lg hover:from-blue-50 hover:to-blue-100 transition cursor-pointer">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
-                          <span className="text-lg">⚖️</span>
+                  <div className="space-y-2 max-h-80 overflow-y-auto">
+                    {cases.map(c => (
+                      <Link href={`/casos/${c.id}`} key={c.id}
+                        className="block p-4 bg-white/5 hover:bg-white/10 rounded-xl transition">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-medium text-white">{c.matter}</p>
+                            <p className="text-sm text-slate-400">{c.client.name} • {c.caseNumber || 'Sin exp.'}</p>
+                          </div>
+                          <span className={`text-xs px-2 py-1 rounded-full ${
+                            c.status === 'activo' ? 'bg-green-500/20 text-green-400' : 'bg-slate-500/20 text-slate-400'
+                          }`}>{c.status}</span>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm text-slate-800 truncate">{h.type}</p>
-                          <p className="text-xs text-slate-500 truncate">{h.case.matter}</p>
-                        </div>
-                      </div>
-                      <div className="mt-2 flex items-center gap-2 text-xs">
-                        <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded font-medium">
-                          {new Date(h.date).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })}
-                        </span>
-                        <span className="text-slate-500">{h.time}</span>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-            {/* Pending Tasks */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-100">
-              <div className="px-5 py-4 border-b border-slate-100">
-                <h2 className="font-semibold text-slate-800">✅ Tareas Pendientes</h2>
-              </div>
-              <div className="p-4 space-y-2">
-                {tasks.length === 0 ? (
-                  <div className="text-center py-6">
-                    <span className="text-3xl block mb-2">📝</span>
-                    <p className="text-slate-400 text-sm">Sin tareas pendientes</p>
+                      </Link>
+                    ))}
                   </div>
-                ) : (
-                  tasks.slice(0, 5).map(t => (
-                    <div key={t.id} className="flex items-start gap-3 p-2 hover:bg-slate-50 rounded-lg transition">
-                      <input type="checkbox" className="mt-1 w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-slate-700">{t.title}</p>
-                        {t.dueDate && (
-                          <p className="text-xs text-slate-400 mt-0.5">
-                            Vence: {new Date(t.dueDate).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })}
-                          </p>
-                        )}
-                      </div>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                        t.priority === 'alta' ? 'bg-red-100 text-red-600' :
-                        t.priority === 'media' ? 'bg-amber-100 text-amber-600' :
-                        'bg-green-100 text-green-600'
-                      }`}>{t.priority}</span>
-                    </div>
-                  ))
                 )}
+                
+                <Link href="/casos" className="block mt-4 text-center text-blue-400 text-sm hover:underline">
+                  Ver todos los expedientes →
+                </Link>
               </div>
-            </div>
+            )}
 
-            {/* AI Card */}
-            <Link href="/ai" className="block bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-xl p-5 shadow-lg hover:shadow-xl transition group">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition">
-                  <span className="text-3xl">🤖</span>
+            {/* Escrito Section */}
+            {activeSection === 'escrito' && (
+              <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-6 border border-white/10">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center">
+                      <span className="text-2xl">📝</span>
+                    </div>
+                    <h2 className="text-xl font-bold text-white">Escritos</h2>
+                  </div>
+                  <button className="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-xl font-medium text-sm transition">
+                    + Nuevo
+                  </button>
                 </div>
-                <div>
-                  <p className="font-bold text-lg">Asistente Legal IA</p>
-                  <p className="text-sm text-slate-400">Powered by Claude</p>
+                
+                <div className="text-center py-8">
+                  <span className="text-4xl block mb-2">📄</span>
+                  <p className="text-slate-400 mb-4">Genera escritos legales con IA</p>
+                  <Link href="/ai" className="inline-block px-6 py-3 bg-purple-500 hover:bg-purple-600 text-white rounded-xl font-medium transition">
+                    🤖 Generar con IA
+                  </Link>
                 </div>
               </div>
-              <p className="mt-4 text-sm text-slate-300">Analiza casos, redacta escritos y encuentra jurisprudencia con inteligencia artificial.</p>
-              <div className="mt-4 flex items-center text-blue-400 text-sm font-medium">
-                Consultar ahora <span className="ml-2 group-hover:translate-x-1 transition">→</span>
+            )}
+
+            {/* IA Section */}
+            {activeSection === 'ia' && (
+              <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-6 border border-white/10">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
+                    <span className="text-2xl">🤖</span>
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-white">Asistente Legal IA</h2>
+                    <p className="text-sm text-slate-400">Powered by Claude</p>
+                  </div>
+                </div>
+                
+                <p className="text-slate-300 mb-6">¿En qué puedo ayudarte?</p>
+                
+                <div className="space-y-3">
+                  <Link href="/ai?prompt=redactar" className="block p-4 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5">
+                    <p className="font-medium text-white">📝 Redactar escrito legal</p>
+                    <p className="text-sm text-slate-400">Demandas, contestaciones, recursos...</p>
+                  </Link>
+                  <Link href="/ai?prompt=analizar" className="block p-4 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5">
+                    <p className="font-medium text-white">🔍 Analizar caso</p>
+                    <p className="text-sm text-slate-400">Estrategia, fortalezas, debilidades...</p>
+                  </Link>
+                  <Link href="/ai?prompt=jurisprudencia" className="block p-4 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5">
+                    <p className="font-medium text-white">⚖️ Buscar jurisprudencia</p>
+                    <p className="text-sm text-slate-400">Precedentes y criterios aplicables...</p>
+                  </Link>
+                  <Link href="/ai?prompt=interrogatorio" className="block p-4 bg-white/5 hover:bg-white/10 rounded-xl transition border border-white/5">
+                    <p className="font-medium text-white">❓ Preparar interrogatorio</p>
+                    <p className="text-sm text-slate-400">Preguntas para testigos...</p>
+                  </Link>
+                </div>
+                
+                <Link href="/ai" className="block mt-6 text-center py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-xl font-semibold hover:from-amber-600 hover:to-orange-700 transition">
+                  Abrir chat completo →
+                </Link>
               </div>
-            </Link>
+            )}
           </div>
-        </div>
+        )}
+
+        {/* Footer */}
+        <footer className="mt-12 text-center">
+          <p className="text-slate-500 text-sm">
+            Hecho por <span className="text-amber-500">Colmena (C6)</span> • 2025
+          </p>
+        </footer>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-slate-900 text-slate-400 py-8 mt-12">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <div className="flex items-center justify-center gap-2 mb-3">
-            <span className="text-2xl">⚖️</span>
-            <span className="font-bold text-white">LEGAL <span className="font-light text-blue-400">Solutions</span></span>
-          </div>
-          <p className="text-sm mb-2">Hecho por <span className="text-blue-400 font-semibold">Colmena (C6)</span> • 28/12/2025</p>
-          <Link href="/privacidad" className="text-xs hover:text-white transition">Aviso de Privacidad</Link>
-        </div>
-      </footer>
+      <style jsx>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 }
