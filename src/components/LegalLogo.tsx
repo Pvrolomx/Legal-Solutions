@@ -3,18 +3,15 @@
 type Props = {
   width?: number;
   className?: string;
-  darkMode?: boolean;
 };
 
 export default function LegalLogo({ 
   width = 300, 
   className,
-  darkMode = true
 }: Props) {
   const height = width * 0.55;
-  const mainColor = darkMode ? "#E7D3A3" : "#1e3a5f"; // Dorado en dark, azul en light
-  const triangleColor = darkMode ? "#E7D3A3" : "#d4c4a8"; // Triángulo beige/dorado
-  const subtitleColor = darkMode ? "#64748b" : "#1e3a5f";
+  const mainColor = "#E7D3A3"; // Dorado/beige para fondo oscuro
+  const subtitleColor = "#94a3b8"; // Slate-400
   
   return (
     <svg
@@ -28,41 +25,41 @@ export default function LegalLogo({
       aria-label="Legal Solutions Logo"
     >
       {/* L */}
-      <path d="M0 15 H12 V85 H45 V97 H0 V15 Z" fill={mainColor} />
+      <path d="M0 18 H10 V82 H42 V92 H0 V18 Z" fill={mainColor} />
       
       {/* E */}
-      <path d="M55 15 H100 V27 H67 V50 H95 V62 H67 V85 H100 V97 H55 V15 Z" fill={mainColor} />
+      <path d="M52 18 H95 V28 H62 V50 H90 V60 H62 V82 H95 V92 H52 V18 Z" fill={mainColor} />
       
       {/* G */}
-      <path d="M110 15 H155 V27 H122 V85 H143 V62 H130 V50 H155 V97 H110 V15 Z" fill={mainColor} />
+      <path d="M105 18 H148 V28 H115 V82 H138 V60 H125 V50 H148 V92 H105 V18 Z" fill={mainColor} />
       
-      {/* A - Closed Triangle with dot */}
+      {/* A - Triangle with dot on TOP */}
       <g>
-        {/* Triangle outline - CLOSED */}
+        {/* Closed Triangle */}
         <path 
-          d="M190 97 L215 20 L240 97 Z" 
-          stroke={triangleColor}
+          d="M185 92 L210 22 L235 92 Z" 
+          stroke={mainColor}
           strokeWidth="10"
           strokeLinejoin="round"
           fill="none"
         />
-        {/* Dot in center */}
-        <circle cx="215" cy="65" r="5" fill={triangleColor} />
+        {/* Dot on TOP of triangle (above the peak) */}
+        <circle cx="210" cy="10" r="5" fill={mainColor} />
       </g>
       
       {/* L */}
-      <path d="M255 15 H267 V85 H300 V97 H255 V15 Z" fill={mainColor} />
+      <path d="M255 18 H265 V82 H300 V92 H255 V18 Z" fill={mainColor} />
       
       {/* solutions - lowercase */}
       <text
         x="150"
-        y="145"
+        y="140"
         textAnchor="middle"
         fill={subtitleColor}
-        fontSize="32"
+        fontSize="30"
         fontFamily="system-ui, -apple-system, 'Segoe UI', sans-serif"
         fontWeight="400"
-        letterSpacing="2"
+        letterSpacing="3"
       >
         solutions
       </text>
