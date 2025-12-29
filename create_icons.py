@@ -1,49 +1,41 @@
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 
-def create_icon(size, filename):
-    # Create image with dark slate background
-    img = Image.new('RGB', (size, size), '#0f172a')
+def create_pyramid_icon(size, filename):
+    # Dark background
+    img = Image.new('RGBA', (size, size), (15, 23, 42, 255))  # slate-900
     draw = ImageDraw.Draw(img)
     
-    # Draw scale/balance symbol (simplified)
-    center_x = size // 2
-    center_y = size // 2
+    # Calculate pyramid dimensions (centered)
+    margin = size * 0.1
+    top = (size / 2, margin)
+    bottom_left = (margin, size - margin)
+    bottom_right = (size - margin, size - margin)
     
-    # Colors
-    gold = '#fbbf24'
-    white = '#f8fafc'
+    # Draw pyramid outline
+    color = (231, 211, 163, 255)  # #E7D3A3
+    line_width = max(2, size // 30)
     
-    # Scale factor
-    s = size / 512
+    # Draw triangle
+    draw.polygon([top, bottom_left, bottom_right], outline=color, width=line_width)
     
-    # Draw the balance base (triangle)
-    base_points = [
-        (center_x - 80*s, center_y + 150*s),
-        (center_x + 80*s, center_y + 150*s),
-        (center_x, center_y + 50*s)
-    ]
-    draw.polygon(base_points, fill=gold)
+    # Draw lines explicitly for better quality
+    draw.line([top, bottom_left], fill=color, width=line_width)
+    draw.line([bottom_left, bottom_right], fill=color, width=line_width)
+    draw.line([bottom_right, top], fill=color, width=line_width)
     
-    # Draw vertical pole
-    draw.rectangle([center_x - 8*s, center_y - 120*s, center_x + 8*s, center_y + 50*s], fill=gold)
-    
-    # Draw horizontal bar
-    draw.rectangle([center_x - 150*s, center_y - 130*s, center_x + 150*s, center_y - 110*s], fill=gold)
-    
-    # Draw left scale pan
-    draw.ellipse([center_x - 180*s, center_y - 30*s, center_x - 80*s, center_y + 30*s], fill=white, outline=gold, width=int(4*s))
-    # Left chain
-    draw.line([(center_x - 130*s, center_y - 120*s), (center_x - 130*s, center_y - 30*s)], fill=gold, width=int(4*s))
-    
-    # Draw right scale pan
-    draw.ellipse([center_x + 80*s, center_y - 30*s, center_x + 180*s, center_y + 30*s], fill=white, outline=gold, width=int(4*s))
-    # Right chain
-    draw.line([(center_x + 130*s, center_y - 120*s), (center_x + 130*s, center_y - 30*s)], fill=gold, width=int(4*s))
+    # Draw center dot
+    center_y = size * 0.52
+    dot_radius = max(3, size // 25)
+    draw.ellipse([
+        size/2 - dot_radius, center_y - dot_radius,
+        size/2 + dot_radius, center_y + dot_radius
+    ], fill=color)
     
     img.save(filename, 'PNG')
-    print(f'Created {filename}')
+    print(f"Created {filename}")
 
-# Create icons
-create_icon(192, '/home/pvrolo/legal-solutions/public/icon-192.png')
-create_icon(512, '/home/pvrolo/legal-solutions/public/icon-512.png')
-print('Icons created!')
+# Generate PWA icons
+create_pyramid_icon(192, '/home/pvrolo/legal-solutions/public/icon-192.png')
+create_pyramid_icon(512, '/home/pvrolo/legal-solutions/public/icon-512.png')
+
+print("PWA icons generated!")

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import LegalAIcon from '@/components/LegalAIcon';
 
 interface Client { id: string; name: string; phone: string; email: string | null; }
 interface Case { id: string; matter: string; caseNumber: string | null; status: string; client: { name: string }; }
@@ -41,8 +42,8 @@ export default function HomePage() {
       {/* Header */}
       <header className="pt-8 pb-4 px-6">
         <div className="max-w-lg mx-auto text-center">
-          <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl shadow-amber-500/20">
-            <span className="text-4xl">⚖️</span>
+          <div className="mx-auto mb-4">
+            <LegalAIcon size={80} color="#E7D3A3" strokeWidth={6} dotRadius={5} />
           </div>
           <h1 className="text-3xl font-bold text-white tracking-tight">LEGAL <span className="font-light text-blue-400">Solutions</span></h1>
           <p className="text-slate-400 text-sm mt-1">Sistema de Gestión Legal con IA</p>
@@ -127,6 +128,10 @@ export default function HomePage() {
                     ))}
                   </div>
                 )}
+                
+                <Link href="/clientes" className="block mt-4 text-center text-emerald-400 text-sm hover:underline">
+                  Ver todos los clientes →
+                </Link>
               </div>
             )}
 
@@ -212,7 +217,7 @@ export default function HomePage() {
                   </div>
                   <div>
                     <h2 className="text-xl font-bold text-white">Asistente Legal IA</h2>
-                    <p className="text-sm text-slate-400">Powered by Claude</p>
+                    <p className="text-sm text-slate-400">Haiku + Sonnet</p>
                   </div>
                 </div>
                 
@@ -247,6 +252,7 @@ export default function HomePage() {
 
         {/* Footer */}
         <footer className="mt-12 text-center">
+          <LegalAIcon size={32} color="#64748b" strokeWidth={3} dotRadius={2} className="mx-auto mb-2" />
           <p className="text-slate-500 text-sm">
             Hecho por <span className="text-amber-500">Colmena (C6)</span> • 2025
           </p>
