@@ -13,6 +13,9 @@ export async function GET(request: Request) {
   
   const tasks = await prisma.task.findMany({
     where,
+    include: {
+      case: { select: { id: true, matter: true } },
+    },
     orderBy: [{ priority: 'desc' }, { dueDate: 'asc' }],
     take: limit,
   });
@@ -27,11 +30,12 @@ export async function POST(request: Request) {
   
   const task = await prisma.task.create({
     data: {
-      caseId: data.caseId,
+      caseId: data.caseId || null,
       title: data.title,
-      description: data.description,
+      description: data.description || null,
       dueDate: data.dueDate ? new Date(data.dueDate) : null,
       priority: data.priority || 'media',
+      status: 'pendiente',
     },
   });
   
