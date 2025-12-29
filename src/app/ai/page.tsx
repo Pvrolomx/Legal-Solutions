@@ -6,6 +6,7 @@ import Link from 'next/link';
 interface Message {
   role: 'user' | 'assistant';
   content: string;
+  model?: string;
 }
 
 interface Case {
@@ -30,17 +31,13 @@ export default function AIAssistant() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [currentModel, setCurrentModel] = useState<string | null>(null);
   const [cases, setCases] = useState<Case[]>([]);
   const [selectedCase, setSelectedCase] = useState<Case | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    loadCases();
-  }, []);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  useEffect(() => { loadCases(); }, []);
+  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
   const loadCases = async () => {
     try {
@@ -60,6 +57,7 @@ export default function AIAssistant() {
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setLoading(true);
+    setCurrentModel(null);
 
     try {
       const res = await fetch('/api/ai/chat', {
@@ -68,18 +66,21 @@ export default function AIAssistant() {
         body: JSON.stringify({
           message: text,
           caseContext: selectedCase,
-          history: messages.slice(-10), // Last 10 messages for context
+          history: messages.slice(-10),
         }),
       });
 
       const data = await res.json();
       
-      if (data.error) {
-        throw new Error(data.error);
-      }
+      if (data.error) throw new Error(data.error);
 
-      const assistantMessage: Message = { role: 'assistant', content: data.response };
+      const assistantMessage: Message = { 
+        role: 'assistant', 
+        content: data.response,
+        model: data.model 
+      };
       setMessages(prev => [...prev, assistantMessage]);
+      setCurrentModel(data.model);
     } catch (error: any) {
       setMessages(prev => [...prev, { 
         role: 'assistant', 
@@ -90,70 +91,66 @@ export default function AIAssistant() {
     setLoading(false);
   };
 
-  const clearChat = () => {
-    setMessages([]);
-  };
-
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col">
       {/* Header */}
-      <header className="bg-slate-900 text-white px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="text-3xl">⚖️</Link>
-            <div>
-              <h1 className="text-xl font-bold">LEGAL <span className="text-blue-400 font-light">Solutions</span></h1>
-              <p className="text-xs text-slate-400">Asistente Legal IA</p>
+      <header className="pt-6 px-4">
+        <div className="max-w-3xl mx-auto">
+          <Link href="/" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition mb-4">
+            <span>←</span> Inicio
+          </Link>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
+                <span className="text-2xl">🤖</span>
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-white">Asistente Legal IA</h1>
+                <p className="text-sm text-slate-400">Powered by Claude</p>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <select 
-              value={selectedCase?.id || ''} 
-              onChange={(e) => setSelectedCase(cases.find(c => c.id === e.target.value) || null)}
-              className="bg-slate-800 border border-slate-700 rounded px-3 py-1.5 text-sm"
-            >
-              <option value="">Sin caso seleccionado</option>
-              {cases.map(c => (
-                <option key={c.id} value={c.id}>{c.caseNumber || c.matter}</option>
-              ))}
-            </select>
-            <button onClick={clearChat} className="text-sm text-slate-400 hover:text-white">
-              Limpiar chat
+            <button onClick={() => setMessages([])} className="px-3 py-1.5 text-sm text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition">
+              Limpiar
             </button>
-            <Link href="/" className="text-sm text-slate-400 hover:text-white">← Volver</Link>
           </div>
         </div>
       </header>
 
-      {/* Case Context Banner */}
-      {selectedCase && (
-        <div className="bg-blue-900 text-blue-100 px-6 py-2">
-          <div className="max-w-4xl mx-auto flex items-center justify-between text-sm">
-            <span>
-              <strong>Caso activo:</strong> {selectedCase.matter} | {selectedCase.caseType} | {selectedCase.court || 'Sin juzgado'}
-            </span>
-            <button onClick={() => setSelectedCase(null)} className="text-blue-300 hover:text-white">✕</button>
+      {/* Case Selector */}
+      <div className="px-4 py-4 max-w-3xl mx-auto w-full">
+        <select 
+          value={selectedCase?.id || ''} 
+          onChange={(e) => setSelectedCase(cases.find(c => c.id === e.target.value) || null)}
+          className="w-full px-4 py-3 bg-white/10 border border-white/10 rounded-xl text-white focus:ring-2 focus:ring-amber-500"
+        >
+          <option value="">📁 Sin caso seleccionado (consulta general)</option>
+          {cases.map(c => (
+            <option key={c.id} value={c.id}>📁 {c.matter} - {c.caseNumber || 'Sin exp.'}</option>
+          ))}
+        </select>
+        {selectedCase && (
+          <div className="mt-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-sm text-amber-300">
+            <strong>Caso activo:</strong> {selectedCase.matter} | {selectedCase.caseType} | {selectedCase.court || 'Sin juzgado'}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Chat Area */}
-      <main className="flex-1 max-w-4xl w-full mx-auto p-6 flex flex-col">
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto mb-4 space-y-4">
+      <main className="flex-1 max-w-3xl w-full mx-auto px-4 pb-4 flex flex-col overflow-hidden">
+        <div className="flex-1 overflow-y-auto space-y-4 mb-4">
           {messages.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-6xl mb-4">🤖⚖️</p>
-              <h2 className="text-xl font-semibold text-slate-700 mb-2">Asistente Legal IA</h2>
-              <p className="text-slate-500 mb-6">
-                Powered by Claude • Especializado en derecho mexicano
+            <div className="text-center py-8">
+              <p className="text-5xl mb-4">🤖⚖️</p>
+              <h2 className="text-xl font-semibold text-white mb-2">¿En qué puedo ayudarte?</h2>
+              <p className="text-slate-400 mb-6 text-sm">
+                Usa Haiku para consultas rápidas, Sonnet para tareas pesadas
               </p>
               <div className="flex flex-wrap justify-center gap-2">
                 {QUICK_PROMPTS.map((qp, idx) => (
                   <button
                     key={idx}
                     onClick={() => sendMessage(qp.prompt)}
-                    className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm hover:bg-slate-50 hover:border-slate-300 transition"
+                    className="px-4 py-2 bg-white/10 border border-white/10 rounded-xl text-sm text-white hover:bg-white/20 transition"
                   >
                     {qp.label}
                   </button>
@@ -164,24 +161,31 @@ export default function AIAssistant() {
 
           {messages.map((msg, idx) => (
             <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[80%] rounded-lg px-4 py-3 ${
+              <div className={`max-w-[85%] rounded-2xl px-4 py-3 ${
                 msg.role === 'user' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-white border border-slate-200 text-slate-700'
+                  ? 'bg-amber-500 text-white' 
+                  : 'bg-white/10 border border-white/10 text-white'
               }`}>
                 <pre className="whitespace-pre-wrap font-sans text-sm">{msg.content}</pre>
+                {msg.model && (
+                  <div className="mt-2 pt-2 border-t border-white/10 text-xs text-slate-400">
+                    {msg.model === 'sonnet' ? '🚀 Sonnet (potente)' : '⚡ Haiku (rápido)'}
+                  </div>
+                )}
               </div>
             </div>
           ))}
 
           {loading && (
             <div className="flex justify-start">
-              <div className="bg-white border border-slate-200 rounded-lg px-4 py-3">
-                <div className="flex items-center gap-2 text-slate-500">
-                  <div className="animate-pulse">●</div>
-                  <div className="animate-pulse animation-delay-200">●</div>
-                  <div className="animate-pulse animation-delay-400">●</div>
-                  <span className="ml-2 text-sm">Analizando...</span>
+              <div className="bg-white/10 border border-white/10 rounded-2xl px-4 py-3">
+                <div className="flex items-center gap-2 text-slate-400">
+                  <div className="flex gap-1">
+                    <span className="w-2 h-2 bg-amber-500 rounded-full animate-bounce" style={{animationDelay: '0ms'}}></span>
+                    <span className="w-2 h-2 bg-amber-500 rounded-full animate-bounce" style={{animationDelay: '150ms'}}></span>
+                    <span className="w-2 h-2 bg-amber-500 rounded-full animate-bounce" style={{animationDelay: '300ms'}}></span>
+                  </div>
+                  <span className="ml-2 text-sm">Pensando...</span>
                 </div>
               </div>
             </div>
@@ -191,7 +195,7 @@ export default function AIAssistant() {
         </div>
 
         {/* Input */}
-        <div className="bg-white border border-slate-200 rounded-lg p-3">
+        <div className="bg-white/10 backdrop-blur-lg border border-white/10 rounded-2xl p-3">
           <div className="flex gap-2">
             <textarea
               value={input}
@@ -203,28 +207,23 @@ export default function AIAssistant() {
                 }
               }}
               placeholder="Escribe tu consulta legal..."
-              className="flex-1 resize-none border-0 focus:ring-0 text-sm"
+              className="flex-1 resize-none bg-transparent border-0 focus:ring-0 text-white placeholder-slate-500 text-sm"
               rows={2}
             />
             <button
               onClick={() => sendMessage()}
               disabled={loading || !input.trim()}
-              className="self-end bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="self-end bg-amber-500 hover:bg-amber-600 text-white px-6 py-2 rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
               {loading ? '...' : 'Enviar'}
             </button>
           </div>
         </div>
 
-        <p className="text-center text-xs text-slate-400 mt-3">
-          Este asistente proporciona orientación general. Siempre verifica la información con fuentes oficiales.
+        <p className="text-center text-xs text-slate-500 mt-3">
+          ⚡ Haiku = consultas simples | 🚀 Sonnet = redacción y análisis
         </p>
       </main>
-
-      {/* Footer */}
-      <footer className="bg-slate-800 text-slate-400 py-4 text-center text-sm">
-        Hecho por <span className="text-blue-400">Colmena (C6)</span> • 28/12/2025
-      </footer>
     </div>
   );
 }

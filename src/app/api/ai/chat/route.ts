@@ -7,6 +7,23 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+// Keywords that trigger Sonnet (heavy tasks)
+const SONNET_KEYWORDS = [
+  'redactar', 'redacta', 'escribe', 'elabora', 'escrito',
+  'demanda', 'contestacion', 'contestación', 'recurso', 'amparo',
+  'analizar', 'analiza', 'análisis', 'estrategia',
+  'jurisprudencia', 'fundamento', 'fundamentos', 'criterio',
+  'interrogatorio', 'preguntas', 'alegatos', 'alegato',
+  'contrato', 'convenio', 'acuerdo',
+  'sentencia', 'resolución', 'resolucion',
+  'apelación', 'apelacion', 'agravio', 'agravios',
+];
+
+function shouldUseSonnet(message: string): boolean {
+  const lowerMessage = message.toLowerCase();
+  return SONNET_KEYWORDS.some(keyword => lowerMessage.includes(keyword));
+}
+
 const SYSTEM_PROMPT = `Eres un asistente legal experto en derecho mexicano. Tu rol es ayudar a abogados litigantes con:
 
 1. ANÁLISIS DE CASOS: Analizar hechos, identificar elementos jurídicos relevantes, sugerir estrategias.
@@ -42,6 +59,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Message required' }, { status: 400 });
     }
     
+    // Determine which model to use
+    const useSonnet = shouldUseSonnet(message);
+    const model = useSonnet ? 'claude-sonnet-4-20250514' : 'claude-3-haiku-20240307';
+    
     // Build messages array
     const messages: { role: 'user' | 'assistant'; content: string }[] = [];
     
@@ -68,8 +89,8 @@ ${message}`;
     messages.push({ role: 'user', content: userMessage });
     
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 4096,
+      model,
+      max_tokens: useSonnet ? 4096 : 2048,
       system: SYSTEM_PROMPT,
       messages,
     });
@@ -80,6 +101,8 @@ ${message}`;
     
     return NextResponse.json({ 
       response: assistantMessage,
+      model: useSonnet ? 'sonnet' : 'haiku',
+      modelFull: model,
       usage: response.usage,
     });
     
