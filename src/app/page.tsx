@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import LegalLogo from '@/components/LegalLogo';
 import LegalAIcon from '@/components/LegalAIcon';
 
 interface Client { id: string; name: string; phone: string; email: string | null; }
@@ -44,7 +43,7 @@ export default function HomePage() {
       <header className="pt-8 pb-4 px-6">
         <div className="max-w-lg mx-auto text-center">
           <div className="mx-auto mb-2">
-            <LegalLogo width={260} />
+            <img src="/logo.png" alt="Legal Solutions" className="h-28 mx-auto" />
           </div>
           <p className="text-slate-400 text-sm">Sistema de Gestión Legal con IA</p>
         </div>
