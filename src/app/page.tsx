@@ -38,7 +38,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-stone-100">
       {/* Header */}
       <header className="bg-white border-b border-stone-200 pt-6 pb-4 px-6">
         <div className="max-w-lg mx-auto text-center">
@@ -53,50 +53,42 @@ export default function HomePage() {
           <div className="grid grid-cols-2 gap-4">
             {/* Cliente */}
             <button onClick={() => handleSectionClick('cliente')}
-              className="bg-white rounded-2xl p-6 flex flex-col items-center justify-center shadow-lg border border-stone-200 hover:shadow-xl hover:border-emerald-300 transition-all duration-300 active:scale-95">
-              <div className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-2xl flex items-center justify-center mb-3 shadow-lg shadow-emerald-200">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
+              className="bg-white rounded-3xl overflow-hidden shadow-lg border border-stone-200 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 active:scale-95">
+              <img src="/btn-cliente.jpg" alt="Cliente" className="w-full aspect-square object-cover" />
+              <div className="p-3 text-center bg-gradient-to-t from-white to-transparent -mt-8 relative">
+                <span className="text-stone-800 font-semibold text-lg block">Cliente</span>
+                <span className="text-stone-400 text-xs">Ver y agregar</span>
               </div>
-              <span className="text-stone-800 font-semibold text-lg">Cliente</span>
-              <span className="text-stone-400 text-xs mt-1">Ver y agregar</span>
             </button>
 
             {/* Expediente */}
             <button onClick={() => handleSectionClick('expediente')}
-              className="bg-white rounded-2xl p-6 flex flex-col items-center justify-center shadow-lg border border-stone-200 hover:shadow-xl hover:border-blue-300 transition-all duration-300 active:scale-95">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center mb-3 shadow-lg shadow-blue-200">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                </svg>
+              className="bg-white rounded-3xl overflow-hidden shadow-lg border border-stone-200 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 active:scale-95">
+              <img src="/btn-expediente.jpg" alt="Expediente" className="w-full aspect-square object-cover" />
+              <div className="p-3 text-center bg-gradient-to-t from-white to-transparent -mt-8 relative">
+                <span className="text-stone-800 font-semibold text-lg block">Expediente</span>
+                <span className="text-stone-400 text-xs">Casos legales</span>
               </div>
-              <span className="text-stone-800 font-semibold text-lg">Expediente</span>
-              <span className="text-stone-400 text-xs mt-1">Casos legales</span>
             </button>
 
             {/* Escrito */}
             <button onClick={() => handleSectionClick('escrito')}
-              className="bg-white rounded-2xl p-6 flex flex-col items-center justify-center shadow-lg border border-stone-200 hover:shadow-xl hover:border-purple-300 transition-all duration-300 active:scale-95">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-purple-600 rounded-2xl flex items-center justify-center mb-3 shadow-lg shadow-purple-200">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
+              className="bg-white rounded-3xl overflow-hidden shadow-lg border border-stone-200 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 active:scale-95">
+              <img src="/btn-escrito.jpg" alt="Escrito" className="w-full aspect-square object-cover" />
+              <div className="p-3 text-center bg-gradient-to-t from-white to-transparent -mt-8 relative">
+                <span className="text-stone-800 font-semibold text-lg block">Escrito</span>
+                <span className="text-stone-400 text-xs">Documentos</span>
               </div>
-              <span className="text-stone-800 font-semibold text-lg">Escrito</span>
-              <span className="text-stone-400 text-xs mt-1">Documentos</span>
             </button>
 
             {/* IA */}
             <button onClick={() => handleSectionClick('ia')}
-              className="bg-white rounded-2xl p-6 flex flex-col items-center justify-center shadow-lg border border-stone-200 hover:shadow-xl hover:border-amber-300 transition-all duration-300 active:scale-95">
-              <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center mb-3 shadow-lg shadow-amber-200">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
+              className="bg-white rounded-3xl overflow-hidden shadow-lg border border-stone-200 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 active:scale-95">
+              <img src="/btn-ia.jpg" alt="IA" className="w-full aspect-square object-cover" />
+              <div className="p-3 text-center bg-gradient-to-t from-white to-transparent -mt-8 relative">
+                <span className="text-stone-800 font-semibold text-lg block">IA</span>
+                <span className="text-stone-400 text-xs">Asistente legal</span>
               </div>
-              <span className="text-stone-800 font-semibold text-lg">IA</span>
-              <span className="text-stone-400 text-xs mt-1">Asistente legal</span>
             </button>
           </div>
         ) : (
@@ -112,11 +104,7 @@ export default function HomePage() {
               <div className="bg-white rounded-2xl p-6 shadow-lg border border-stone-200">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-xl flex items-center justify-center shadow-md">
-                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    </div>
+                    <img src="/btn-cliente.jpg" alt="Cliente" className="w-12 h-12 rounded-xl object-cover" />
                     <h2 className="text-xl font-bold text-stone-800">Clientes</h2>
                   </div>
                   <Link href="/clientes/nuevo" className="px-4 py-2 bg-gradient-to-b from-emerald-500 to-emerald-600 text-white rounded-xl font-medium text-sm shadow-md hover:from-emerald-600 hover:to-emerald-700 transition">
@@ -128,11 +116,7 @@ export default function HomePage() {
                   <p className="text-stone-400 text-center py-8">Cargando...</p>
                 ) : clients.length === 0 ? (
                   <div className="text-center py-8">
-                    <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <svg className="w-8 h-8 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                      </svg>
-                    </div>
+                    <img src="/btn-cliente.jpg" alt="" className="w-20 h-20 mx-auto mb-3 rounded-2xl opacity-50" />
                     <p className="text-stone-500">No hay clientes</p>
                     <Link href="/clientes/nuevo" className="text-emerald-600 font-medium mt-2 inline-block hover:underline">Agregar primero</Link>
                   </div>
@@ -159,11 +143,7 @@ export default function HomePage() {
               <div className="bg-white rounded-2xl p-6 shadow-lg border border-stone-200">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
-                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                      </svg>
-                    </div>
+                    <img src="/btn-expediente.jpg" alt="Expediente" className="w-12 h-12 rounded-xl object-cover" />
                     <h2 className="text-xl font-bold text-stone-800">Expedientes</h2>
                   </div>
                   <Link href="/casos/nuevo" className="px-4 py-2 bg-gradient-to-b from-blue-500 to-blue-600 text-white rounded-xl font-medium text-sm shadow-md hover:from-blue-600 hover:to-blue-700 transition">
@@ -175,11 +155,7 @@ export default function HomePage() {
                   <p className="text-stone-400 text-center py-8">Cargando...</p>
                 ) : cases.length === 0 ? (
                   <div className="text-center py-8">
-                    <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <svg className="w-8 h-8 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                      </svg>
-                    </div>
+                    <img src="/btn-expediente.jpg" alt="" className="w-20 h-20 mx-auto mb-3 rounded-2xl opacity-50" />
                     <p className="text-stone-500">No hay expedientes</p>
                     <Link href="/casos/nuevo" className="text-blue-600 font-medium mt-2 inline-block hover:underline">Crear primero</Link>
                   </div>
@@ -213,21 +189,13 @@ export default function HomePage() {
               <div className="bg-white rounded-2xl p-6 shadow-lg border border-stone-200">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center shadow-md">
-                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                    </div>
+                    <img src="/btn-escrito.jpg" alt="Escrito" className="w-12 h-12 rounded-xl object-cover" />
                     <h2 className="text-xl font-bold text-stone-800">Escritos</h2>
                   </div>
                 </div>
                 
                 <div className="text-center py-8">
-                  <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <svg className="w-8 h-8 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </div>
+                  <img src="/btn-escrito.jpg" alt="" className="w-24 h-24 mx-auto mb-4 rounded-2xl" />
                   <p className="text-stone-500 mb-4">Genera escritos legales con IA</p>
                   <Link href="/ai" className="inline-block px-6 py-3 bg-gradient-to-b from-purple-500 to-purple-600 text-white rounded-xl font-medium shadow-md hover:from-purple-600 hover:to-purple-700 transition">
                     Generar con IA
@@ -240,11 +208,7 @@ export default function HomePage() {
             {activeSection === 'ia' && (
               <div className="bg-white rounded-2xl p-6 shadow-lg border border-stone-200">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center shadow-md">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                  </div>
+                  <img src="/btn-ia.jpg" alt="IA" className="w-12 h-12 rounded-xl object-cover" />
                   <div>
                     <h2 className="text-xl font-bold text-stone-800">Asistente Legal IA</h2>
                     <p className="text-sm text-stone-500">Haiku + Sonnet</p>
@@ -255,56 +219,20 @@ export default function HomePage() {
                 
                 <div className="space-y-3">
                   <Link href="/ai?prompt=redactar" className="block p-4 bg-stone-50 hover:bg-amber-50 rounded-xl transition border border-stone-100 hover:border-amber-200">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                        <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="font-medium text-stone-800">Redactar escrito legal</p>
-                        <p className="text-sm text-stone-500">Demandas, contestaciones, recursos...</p>
-                      </div>
-                    </div>
+                    <p className="font-medium text-stone-800">📝 Redactar escrito legal</p>
+                    <p className="text-sm text-stone-500">Demandas, contestaciones, recursos...</p>
                   </Link>
                   <Link href="/ai?prompt=analizar" className="block p-4 bg-stone-50 hover:bg-amber-50 rounded-xl transition border border-stone-100 hover:border-amber-200">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                        <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="font-medium text-stone-800">Analizar caso</p>
-                        <p className="text-sm text-stone-500">Estrategia, fortalezas, debilidades...</p>
-                      </div>
-                    </div>
+                    <p className="font-medium text-stone-800">🔍 Analizar caso</p>
+                    <p className="text-sm text-stone-500">Estrategia, fortalezas, debilidades...</p>
                   </Link>
                   <Link href="/ai?prompt=jurisprudencia" className="block p-4 bg-stone-50 hover:bg-amber-50 rounded-xl transition border border-stone-100 hover:border-amber-200">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                        <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="font-medium text-stone-800">Buscar jurisprudencia</p>
-                        <p className="text-sm text-stone-500">Precedentes y criterios aplicables...</p>
-                      </div>
-                    </div>
+                    <p className="font-medium text-stone-800">⚖️ Buscar jurisprudencia</p>
+                    <p className="text-sm text-stone-500">Precedentes y criterios aplicables...</p>
                   </Link>
                   <Link href="/ai?prompt=interrogatorio" className="block p-4 bg-stone-50 hover:bg-amber-50 rounded-xl transition border border-stone-100 hover:border-amber-200">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                        <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="font-medium text-stone-800">Preparar interrogatorio</p>
-                        <p className="text-sm text-stone-500">Preguntas para testigos...</p>
-                      </div>
-                    </div>
+                    <p className="font-medium text-stone-800">❓ Preparar interrogatorio</p>
+                    <p className="text-sm text-stone-500">Preguntas para testigos...</p>
                   </Link>
                 </div>
                 
