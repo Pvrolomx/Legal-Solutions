@@ -103,7 +103,7 @@ export default function NuevoClientePage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <header className="pt-6 px-4">
         <div className="max-w-lg mx-auto">
-          <Link href="/" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition mb-4">
+          <Link href="/clientes" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition mb-4">
             <span>←</span> Volver
           </Link>
           <div className="flex items-center gap-3">
