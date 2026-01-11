@@ -82,13 +82,13 @@ export default function HomePage() {
               </div>
             </button>
 
-            {/* IA */}
-            <button onClick={() => handleSectionClick('ia')}
+            {/* Agenda */}
+            <button onClick={() => handleSectionClick('agenda')}
               className="bg-white rounded-3xl overflow-hidden shadow-lg border border-stone-200 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 active:scale-95">
-              <img src="/btn-ia.jpg" alt="IA" className="w-full aspect-square object-cover" />
+              <img src="/btn-agenda.jpg" alt="Agenda" className="w-full aspect-square object-cover" />
               <div className="p-3 text-center bg-gradient-to-t from-white to-transparent -mt-8 relative">
-                <span className="text-stone-800 font-semibold text-lg block">IA</span>
-                <span className="text-stone-400 text-xs">Asistente legal</span>
+                <span className="text-stone-800 font-semibold text-lg block">Agenda</span>
+                <span className="text-stone-400 text-xs">Citas y audiencias</span>
               </div>
             </button>
           </div>
@@ -190,40 +190,21 @@ export default function HomePage() {
               <EscritosSection />
             )}
 
-            {/* IA Section */}
-            {activeSection === 'ia' && (
+            {/* Agenda Section */}
+            {activeSection === 'agenda' && (
               <div className="bg-white rounded-2xl p-6 shadow-lg border border-stone-200">
                 <div className="flex items-center gap-3 mb-6">
-                  <img src="/btn-ia.jpg" alt="IA" className="w-12 h-12 rounded-xl object-cover" />
+                  <img src="/btn-agenda.jpg" alt="Agenda" className="w-12 h-12 rounded-xl object-cover" />
                   <div>
-                    <h2 className="text-xl font-bold text-stone-800">Asistente Legal IA</h2>
-                    <p className="text-sm text-stone-500">Haiku + Sonnet</p>
+                    <h2 className="text-xl font-bold text-stone-800">Agenda</h2>
+                    <p className="text-sm text-stone-500">Citas y audiencias</p>
                   </div>
                 </div>
                 
-                <p className="text-stone-600 mb-6">¿En qué puedo ayudarte?</p>
+                <p className="text-stone-600 mb-6">Gestiona tus compromisos legales</p>
                 
-                <div className="space-y-3">
-                  <Link href="/ai?prompt=redactar" className="block p-4 bg-stone-50 hover:bg-amber-50 rounded-xl transition border border-stone-100 hover:border-amber-200">
-                    <p className="font-medium text-stone-800">📝 Redactar escrito legal</p>
-                    <p className="text-sm text-stone-500">Demandas, contestaciones, recursos...</p>
-                  </Link>
-                  <Link href="/ai?prompt=analizar" className="block p-4 bg-stone-50 hover:bg-amber-50 rounded-xl transition border border-stone-100 hover:border-amber-200">
-                    <p className="font-medium text-stone-800">🔍 Analizar caso</p>
-                    <p className="text-sm text-stone-500">Estrategia, fortalezas, debilidades...</p>
-                  </Link>
-                  <Link href="/ai?prompt=jurisprudencia" className="block p-4 bg-stone-50 hover:bg-amber-50 rounded-xl transition border border-stone-100 hover:border-amber-200">
-                    <p className="font-medium text-stone-800">⚖️ Buscar jurisprudencia</p>
-                    <p className="text-sm text-stone-500">Precedentes y criterios aplicables...</p>
-                  </Link>
-                  <Link href="/ai?prompt=interrogatorio" className="block p-4 bg-stone-50 hover:bg-amber-50 rounded-xl transition border border-stone-100 hover:border-amber-200">
-                    <p className="font-medium text-stone-800">❓ Preparar interrogatorio</p>
-                    <p className="text-sm text-stone-500">Preguntas para testigos...</p>
-                  </Link>
-                </div>
-                
-                <Link href="/ai" className="block mt-6 text-center py-3 bg-gradient-to-b from-amber-500 to-orange-500 text-white rounded-xl font-semibold shadow-md hover:from-amber-600 hover:to-orange-600 transition">
-                  Abrir chat completo →
+                <Link href="/agenda" className="block mt-4 text-center py-3 bg-gradient-to-b from-teal-500 to-teal-600 text-white rounded-xl font-semibold shadow-md hover:from-teal-600 hover:to-teal-700 transition">
+                  Ver agenda completa →
                 </Link>
               </div>
             )}
@@ -233,11 +214,11 @@ export default function HomePage() {
         {/* Quick Links */}
         {!activeSection && (
           <div className="mt-6 flex justify-center gap-3">
-            <Link href="/agenda" className="px-4 py-2 bg-white rounded-xl text-stone-600 font-medium text-sm shadow border border-stone-200 hover:border-amber-300 transition">
-              📅 Agenda
-            </Link>
             <Link href="/tareas" className="px-4 py-2 bg-white rounded-xl text-stone-600 font-medium text-sm shadow border border-stone-200 hover:border-amber-300 transition">
               ✅ Tareas
+            </Link>
+            <Link href="/ai" className="px-4 py-2 bg-white rounded-xl text-stone-600 font-medium text-sm shadow border border-stone-200 hover:border-amber-300 transition">
+              🤖 IA
             </Link>
           </div>
         )}
