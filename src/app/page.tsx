@@ -260,7 +260,7 @@ export default function HomePage() {
         <footer className="mt-12 text-center">
           <LegalAIcon size={28} color="#a8a29e" strokeWidth={3} dotRadius={2} className="mx-auto mb-2" />
           <p className="text-stone-400 text-sm">
-            Hecho por <span className="text-amber-600">Colmena (C6)</span> • 2026
+            Hecho por <span className="text-amber-600">Colmena</span> - C6 (Mike) 2026
           </p>
         </footer>
       </main>

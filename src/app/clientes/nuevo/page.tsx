@@ -205,6 +205,13 @@ export default function NuevoClientePage() {
             {saving ? 'Guardando...' : 'Guardar Cliente'}
           </button>
         </form>
+      
+        {/* Footer */}
+        <footer className="py-6 text-center">
+          <p className="text-slate-500 text-sm">
+            Hecho por <span className="text-amber-500">Colmena</span> - C6 (Mike) 2026
+          </p>
+        </footer>
       </main>
     </div>
   );
