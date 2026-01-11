@@ -4,11 +4,13 @@ import { prisma } from '@/lib/prisma';
 // GET - Descargar documento
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+    
     const document = await prisma.document.findUnique({
-      where: { id: params.id }
+      where: { id }
     });
 
     if (!document) {
@@ -49,11 +51,13 @@ export async function GET(
 // DELETE - Eliminar documento
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+    
     await prisma.document.delete({
-      where: { id: params.id }
+      where: { id }
     });
 
     return NextResponse.json({ success: true });
