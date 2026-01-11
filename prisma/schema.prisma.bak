@@ -83,21 +83,17 @@ model Hearing {
 
 model Document {
   id            String    @id @default(cuid())
-  caseId        String?
+  caseId        String
   name          String
   docType       String
   filename      String
-  url           String?
-  data          String?   @db.Text
-  size          Int?
-  category      String    @default("documento")
+  url           String
   aiSummary     String?
   createdAt     DateTime  @default(now())
   
-  case          Case?     @relation(fields: [caseId], references: [id])
+  case          Case      @relation(fields: [caseId], references: [id])
   
   @@index([caseId])
-  @@index([category])
 }
 
 model Task {

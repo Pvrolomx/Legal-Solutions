@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import LegalAIcon from '@/components/LegalAIcon';
+import EscritosSection from '@/components/EscritosSection';
 
 interface Client { id: string; name: string; phone: string; email: string | null; }
 interface Case { id: string; matter: string; caseNumber: string | null; status: string; client: { name: string }; }
@@ -186,22 +187,7 @@ export default function HomePage() {
 
             {/* Escrito Section */}
             {activeSection === 'escrito' && (
-              <div className="bg-white rounded-2xl p-6 shadow-lg border border-stone-200">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <img src="/btn-escrito.jpg" alt="Escrito" className="w-12 h-12 rounded-xl object-cover" />
-                    <h2 className="text-xl font-bold text-stone-800">Escritos</h2>
-                  </div>
-                </div>
-                
-                <div className="text-center py-8">
-                  <img src="/btn-escrito.jpg" alt="" className="w-24 h-24 mx-auto mb-4 rounded-2xl" />
-                  <p className="text-stone-500 mb-4">Genera escritos legales con IA</p>
-                  <Link href="/ai" className="inline-block px-6 py-3 bg-gradient-to-b from-purple-500 to-purple-600 text-white rounded-xl font-medium shadow-md hover:from-purple-600 hover:to-purple-700 transition">
-                    Generar con IA
-                  </Link>
-                </div>
-              </div>
+              <EscritosSection />
             )}
 
             {/* IA Section */}
