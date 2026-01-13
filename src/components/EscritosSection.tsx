@@ -115,14 +115,6 @@ export default function EscritosSection() {
 
       {/* Opciones principales */}
       <div className="space-y-3 mb-6">
-        <Link href="/ai?prompt=redactar"
-          className="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 rounded-xl transition border border-purple-200">
-          <span className="text-2xl">🤖</span>
-          <div>
-            <p className="font-semibold text-purple-800">Generar con IA</p>
-            <p className="text-sm text-purple-600">Claude redacta tu escrito</p>
-          </div>
-        </Link>
 
         <button onClick={() => setShowUpload(!showUpload)}
           className="w-full flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 rounded-xl transition border border-blue-200 text-left">
