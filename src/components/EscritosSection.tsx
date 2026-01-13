@@ -1,37 +1,65 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
+import * as localFS from '@/lib/localFileSystem';
 
-interface Document {
-  id: string;
+interface LocalFile {
   name: string;
-  filename: string;
-  size: number | null;
-  category: string;
-  createdAt: string;
+  size: number;
+  lastModified: number;
 }
 
 export default function EscritosSection() {
-  const [documents, setDocuments] = useState<Document[]>([]);
+  const [files, setFiles] = useState<LocalFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
+  const [folderName, setFolderName] = useState<string | null>(null);
+  const [hasFolder, setHasFolder] = useState(false);
+  const [isSupported, setIsSupported] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    loadDocuments();
+    checkSupport();
   }, []);
 
-  const loadDocuments = async () => {
-    try {
-      const res = await fetch('/api/documents');
-      const data = await res.json();
-      setDocuments(Array.isArray(data) ? data : []);
-    } catch (e) {
-      console.error('Error loading documents:', e);
+  const checkSupport = async () => {
+    if (!localFS.isSupported()) {
+      setIsSupported(false);
+      setLoading(false);
+      return;
+    }
+
+    const hasAccess = await localFS.hasAccess();
+    if (hasAccess) {
+      setHasFolder(true);
+      const name = await localFS.getFolderName();
+      setFolderName(name);
+      await loadFiles();
     }
     setLoading(false);
+  };
+
+  const loadFiles = async () => {
+    const fileList = await localFS.listFiles();
+    setFiles(fileList);
+  };
+
+  const handleSelectFolder = async () => {
+    const success = await localFS.requestDirectory();
+    if (success) {
+      setHasFolder(true);
+      const name = await localFS.getFolderName();
+      setFolderName(name);
+      await loadFiles();
+    }
+  };
+
+  const handleChangeFolder = async () => {
+    await localFS.clearSelectedFolder();
+    setHasFolder(false);
+    setFolderName(null);
+    setFiles([]);
   };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,89 +67,158 @@ export default function EscritosSection() {
     if (!file) return;
 
     setUploading(true);
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('name', file.name);
-    formData.append('category', 'formato');
-
-    try {
-      const res = await fetch('/api/documents', {
-        method: 'POST',
-        body: formData
-      });
-      const data = await res.json();
-      if (data.success) {
-        await loadDocuments();
-        setShowUpload(false);
-      } else {
-        alert('Error: ' + (data.error || 'No se pudo subir'));
-      }
-    } catch (e) {
-      alert('Error al subir archivo');
+    const success = await localFS.saveFile(file.name, file);
+    
+    if (success) {
+      await loadFiles();
+      setShowUpload(false);
+    } else {
+      alert('Error al guardar archivo');
     }
+    
     setUploading(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleDownload = async (doc: Document) => {
-    window.open(`/api/documents/${doc.id}`, '_blank');
+  const handleDownload = async (fileName: string) => {
+    const file = await localFS.getFile(fileName);
+    if (file) {
+      const url = URL.createObjectURL(file);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else {
+      alert('Error al leer archivo');
+    }
   };
 
-  const handleDelete = async (doc: Document) => {
-    if (!confirm(`¿Eliminar "${doc.name}"?`)) return;
-    try {
-      await fetch(`/api/documents/${doc.id}`, { method: 'DELETE' });
-      await loadDocuments();
-    } catch (e) {
+  const handleDelete = async (fileName: string) => {
+    if (!confirm(`¿Eliminar "${fileName}"?`)) return;
+    
+    const success = await localFS.deleteFile(fileName);
+    if (success) {
+      await loadFiles();
+    } else {
       alert('Error al eliminar');
     }
   };
 
   const createBlankDoc = async () => {
-    // Crear documento Word en blanco usando la API
-    const formData = new FormData();
-    const blob = new Blob([''], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-    const file = new File([blob], 'documento_nuevo.docx', { type: blob.type });
-    formData.append('file', file);
-    formData.append('name', 'Documento en blanco');
-    formData.append('category', 'escrito');
-
-    try {
-      const res = await fetch('/api/documents', { method: 'POST', body: formData });
-      const data = await res.json();
-      if (data.success) {
-        window.open(`/api/documents/${data.document.id}`, '_blank');
-      }
-    } catch (e) {
+    // Crear un documento Word básico
+    const docContent = new Blob(
+      [''],
+      { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }
+    );
+    
+    const fileName = `documento_${Date.now()}.docx`;
+    const success = await localFS.saveFile(fileName, docContent);
+    
+    if (success) {
+      await loadFiles();
+      // Descargar inmediatamente
+      handleDownload(fileName);
+    } else {
       alert('Error al crear documento');
     }
   };
 
-  const formatSize = (bytes: number | null) => {
-    if (!bytes) return '';
+  const formatSize = (bytes: number) => {
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp).toLocaleDateString('es-MX', {
+      day: 'numeric',
+      month: 'short'
+    });
+  };
+
+  // Navegador no soportado
+  if (!isSupported) {
+    return (
+      <div className="bg-white rounded-2xl p-6 shadow-lg border border-stone-200">
+        <div className="flex items-center gap-3 mb-6">
+          <img src="/btn-escrito.jpg" alt="Escrito" className="w-12 h-12 rounded-xl object-cover" />
+          <h2 className="text-xl font-bold text-stone-800">Escritos</h2>
+        </div>
+        
+        <div className="text-center py-8">
+          <span className="text-4xl mb-4 block">⚠️</span>
+          <p className="text-stone-700 font-medium mb-2">Navegador no compatible</p>
+          <p className="text-stone-500 text-sm">
+            Tu navegador no soporta guardar archivos localmente.
+            <br />
+            Usa <strong>Chrome actualizado</strong> para esta función.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // No ha seleccionado carpeta
+  if (!hasFolder) {
+    return (
+      <div className="bg-white rounded-2xl p-6 shadow-lg border border-stone-200">
+        <div className="flex items-center gap-3 mb-6">
+          <img src="/btn-escrito.jpg" alt="Escrito" className="w-12 h-12 rounded-xl object-cover" />
+          <h2 className="text-xl font-bold text-stone-800">Escritos</h2>
+        </div>
+        
+        <div className="text-center py-6">
+          <span className="text-4xl mb-4 block">📁</span>
+          <p className="text-stone-700 font-medium mb-2">Elige dónde guardar tus documentos</p>
+          <p className="text-stone-500 text-sm mb-4">
+            Selecciona una carpeta en tu celular o tarjeta SD.
+            <br />
+            Los archivos se guardarán ahí y podrás verlos en tu explorador.
+          </p>
+          
+          <button
+            onClick={handleSelectFolder}
+            className="px-6 py-3 bg-gradient-to-b from-emerald-500 to-emerald-600 text-white rounded-xl font-semibold shadow-md hover:from-emerald-600 hover:to-emerald-700 transition"
+          >
+            📂 Elegir carpeta
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white rounded-2xl p-6 shadow-lg border border-stone-200">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <img src="/btn-escrito.jpg" alt="Escrito" className="w-12 h-12 rounded-xl object-cover" />
           <h2 className="text-xl font-bold text-stone-800">Escritos</h2>
         </div>
       </div>
 
-      {/* Opciones principales */}
-      <div className="space-y-3 mb-6">
+      {/* Carpeta seleccionada */}
+      <div className="flex items-center justify-between p-3 bg-emerald-50 rounded-xl border border-emerald-200 mb-4">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">📂</span>
+          <span className="text-emerald-800 font-medium text-sm">{folderName}</span>
+        </div>
+        <button
+          onClick={handleChangeFolder}
+          className="text-xs text-emerald-600 hover:text-emerald-800"
+        >
+          Cambiar
+        </button>
+      </div>
 
+      {/* Opciones */}
+      <div className="space-y-3 mb-6">
         <button onClick={() => setShowUpload(!showUpload)}
           className="w-full flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 rounded-xl transition border border-blue-200 text-left">
           <span className="text-2xl">📤</span>
           <div>
             <p className="font-semibold text-blue-800">Subir formato</p>
-            <p className="text-sm text-blue-600">Cargar plantilla desde PC o cel</p>
+            <p className="text-sm text-blue-600">Guardar archivo en la carpeta</p>
           </div>
         </button>
 
@@ -130,12 +227,12 @@ export default function EscritosSection() {
             <input
               ref={fileInputRef}
               type="file"
-              accept=".docx,.doc,.pdf"
+              accept=".docx,.doc,.pdf,.txt"
               onChange={handleUpload}
               disabled={uploading}
               className="w-full text-sm text-stone-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-500 file:text-white file:font-medium hover:file:bg-blue-600"
             />
-            {uploading && <p className="text-sm text-blue-600 mt-2">Subiendo...</p>}
+            {uploading && <p className="text-sm text-blue-600 mt-2">Guardando...</p>}
           </div>
         )}
 
@@ -144,40 +241,44 @@ export default function EscritosSection() {
           <span className="text-2xl">📝</span>
           <div>
             <p className="font-semibold text-stone-800">Documento en blanco</p>
-            <p className="text-sm text-stone-600">Descargar Word vacío</p>
+            <p className="text-sm text-stone-600">Crear Word vacío</p>
           </div>
         </button>
       </div>
 
-      {/* Lista de documentos */}
+      {/* Lista de archivos */}
       <div className="border-t border-stone-200 pt-4">
         <h3 className="font-semibold text-stone-700 mb-3 flex items-center gap-2">
-          📁 Mis documentos
-          <span className="text-xs bg-stone-100 px-2 py-0.5 rounded-full">{documents.length}</span>
+          📁 Archivos en carpeta
+          <span className="text-xs bg-stone-100 px-2 py-0.5 rounded-full">{files.length}</span>
         </h3>
 
         {loading ? (
           <p className="text-stone-400 text-center py-4">Cargando...</p>
-        ) : documents.length === 0 ? (
-          <p className="text-stone-400 text-center py-4 text-sm">No hay documentos guardados</p>
+        ) : files.length === 0 ? (
+          <p className="text-stone-400 text-center py-4 text-sm">Carpeta vacía</p>
         ) : (
           <div className="space-y-2 max-h-60 overflow-y-auto">
-            {documents.map(doc => (
-              <div key={doc.id}
+            {files.map(file => (
+              <div key={file.name}
                 className="flex items-center justify-between p-3 bg-stone-50 rounded-xl border border-stone-100 hover:border-stone-300 transition">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <span className="text-lg">{doc.filename.endsWith('.pdf') ? '📕' : '📄'}</span>
+                  <span className="text-lg">
+                    {file.name.endsWith('.pdf') ? '📕' : file.name.endsWith('.docx') || file.name.endsWith('.doc') ? '📄' : '📃'}
+                  </span>
                   <div className="min-w-0">
-                    <p className="font-medium text-stone-800 truncate">{doc.name}</p>
-                    <p className="text-xs text-stone-500">{formatSize(doc.size)}</p>
+                    <p className="font-medium text-stone-800 truncate">{file.name}</p>
+                    <p className="text-xs text-stone-500">
+                      {formatSize(file.size)} • {formatDate(file.lastModified)}
+                    </p>
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => handleDownload(doc)}
+                  <button onClick={() => handleDownload(file.name)}
                     className="px-3 py-1.5 text-sm bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition">
                     ⬇️
                   </button>
-                  <button onClick={() => handleDelete(doc)}
+                  <button onClick={() => handleDelete(file.name)}
                     className="px-3 py-1.5 text-sm bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition">
                     🗑️
                   </button>
