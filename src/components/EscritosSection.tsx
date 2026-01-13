@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import * as localFS from '@/lib/localFileSystem';
 
 interface LocalFile {
@@ -17,6 +18,7 @@ export default function EscritosSection() {
   const [folderName, setFolderName] = useState<string | null>(null);
   const [hasFolder, setHasFolder] = useState(false);
   const [isSupported, setIsSupported] = useState(true);
+  const [showFolderPicker, setShowFolderPicker] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -49,6 +51,7 @@ export default function EscritosSection() {
     const success = await localFS.requestDirectory();
     if (success) {
       setHasFolder(true);
+      setShowFolderPicker(false);
       const name = await localFS.getFolderName();
       setFolderName(name);
       await loadFiles();
@@ -106,7 +109,6 @@ export default function EscritosSection() {
   };
 
   const createBlankDoc = async () => {
-    // Crear un documento Word básico
     const docContent = new Blob(
       [''],
       { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }
@@ -117,7 +119,6 @@ export default function EscritosSection() {
     
     if (success) {
       await loadFiles();
-      // Descargar inmediatamente
       handleDownload(fileName);
     } else {
       alert('Error al crear documento');
@@ -159,8 +160,8 @@ export default function EscritosSection() {
     );
   }
 
-  // No ha seleccionado carpeta
-  if (!hasFolder) {
+  // Pantalla de selección de carpeta
+  if (showFolderPicker && !hasFolder) {
     return (
       <div className="bg-white rounded-2xl p-6 shadow-lg border border-stone-200">
         <div className="flex items-center gap-3 mb-6">
@@ -177,17 +178,63 @@ export default function EscritosSection() {
             Los archivos se guardarán ahí y podrás verlos en tu explorador.
           </p>
           
+          <div className="flex gap-3 justify-center">
+            <button
+              onClick={handleSelectFolder}
+              className="px-6 py-3 bg-gradient-to-b from-emerald-500 to-emerald-600 text-white rounded-xl font-semibold shadow-md hover:from-emerald-600 hover:to-emerald-700 transition"
+            >
+              📂 Elegir carpeta
+            </button>
+            <button
+              onClick={() => setShowFolderPicker(false)}
+              className="px-6 py-3 bg-stone-100 text-stone-600 rounded-xl font-semibold hover:bg-stone-200 transition"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Sin carpeta seleccionada - mostrar opciones básicas
+  if (!hasFolder) {
+    return (
+      <div className="bg-white rounded-2xl p-6 shadow-lg border border-stone-200">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <img src="/btn-escrito.jpg" alt="Escrito" className="w-12 h-12 rounded-xl object-cover" />
+            <h2 className="text-xl font-bold text-stone-800">Escritos</h2>
+          </div>
+        </div>
+
+        {/* Opciones */}
+        <div className="space-y-3">
+          <Link href="/ai?prompt=redactar"
+            className="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 rounded-xl transition border border-purple-200">
+            <span className="text-2xl">🤖</span>
+            <div>
+              <p className="font-semibold text-purple-800">Generar con IA</p>
+              <p className="text-sm text-purple-600">Claude redacta tu escrito</p>
+            </div>
+          </Link>
+
           <button
-            onClick={handleSelectFolder}
-            className="px-6 py-3 bg-gradient-to-b from-emerald-500 to-emerald-600 text-white rounded-xl font-semibold shadow-md hover:from-emerald-600 hover:to-emerald-700 transition"
+            onClick={() => setShowFolderPicker(true)}
+            className="w-full flex items-center gap-3 p-4 bg-gradient-to-r from-emerald-50 to-emerald-100 hover:from-emerald-100 hover:to-emerald-200 rounded-xl transition border border-emerald-200 text-left"
           >
-            📂 Elegir carpeta
+            <span className="text-2xl">📂</span>
+            <div>
+              <p className="font-semibold text-emerald-800">Guardar en mi celular</p>
+              <p className="text-sm text-emerald-600">Elegir carpeta para documentos</p>
+            </div>
           </button>
         </div>
       </div>
     );
   }
 
+  // Con carpeta seleccionada
   return (
     <div className="bg-white rounded-2xl p-6 shadow-lg border border-stone-200">
       <div className="flex items-center justify-between mb-4">
