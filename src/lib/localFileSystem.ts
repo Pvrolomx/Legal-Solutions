@@ -11,7 +11,7 @@ let directoryHandle: FileSystemDirectoryHandle | null = null;
 
 // Verificar si el navegador soporta File System Access API
 export function isSupported(): boolean {
-  return 'showDirectoryPicker' in window;
+  return typeof window !== 'undefined' && 'showDirectoryPicker' in window;
 }
 
 // Solicitar permiso a carpeta
@@ -21,13 +21,16 @@ export async function requestDirectory(): Promise<boolean> {
   }
 
   try {
-    directoryHandle = await window.showDirectoryPicker({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    directoryHandle = await (window as any).showDirectoryPicker({
       mode: 'readwrite',
       startIn: 'documents'
     });
     
     // Guardar handle para persistir
-    await saveHandle(directoryHandle);
+    if (directoryHandle) {
+      await saveHandle(directoryHandle);
+    }
     return true;
   } catch (err) {
     // Usuario canceló o error
