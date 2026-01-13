@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
 import * as localFS from '@/lib/localFileSystem';
 
 interface LocalFile {
@@ -10,15 +9,21 @@ interface LocalFile {
   lastModified: number;
 }
 
+type ViewMode = 'list' | 'editor' | 'folder-picker';
+
 export default function EscritosSection() {
   const [files, setFiles] = useState<LocalFile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
-  const [showUpload, setShowUpload] = useState(false);
-  const [folderName, setFolderName] = useState<string | null>(null);
   const [hasFolder, setHasFolder] = useState(false);
+  const [folderName, setFolderName] = useState<string | null>(null);
   const [isSupported, setIsSupported] = useState(true);
-  const [showFolderPicker, setShowFolderPicker] = useState(false);
+  
+  // Editor state
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [editorContent, setEditorContent] = useState('');
+  const [currentFileName, setCurrentFileName] = useState('');
+  const [saving, setSaving] = useState(false);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -51,7 +56,7 @@ export default function EscritosSection() {
     const success = await localFS.requestDirectory();
     if (success) {
       setHasFolder(true);
-      setShowFolderPicker(false);
+      setViewMode('list');
       const name = await localFS.getFolderName();
       setFolderName(name);
       await loadFiles();
@@ -65,24 +70,74 @@ export default function EscritosSection() {
     setFiles([]);
   };
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Nuevo escrito - abre editor vacío
+  const handleNewDoc = () => {
+    setEditorContent('');
+    setCurrentFileName('');
+    setViewMode('editor');
+  };
+
+  // Desde archivo - carga archivo local
+  const handleFromFile = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setUploading(true);
-    const success = await localFS.saveFile(file.name, file);
+    // Leer contenido del archivo
+    const text = await file.text();
+    setEditorContent(text);
+    setCurrentFileName(file.name.replace(/\.[^/.]+$/, '') + '.txt');
+    setViewMode('editor');
     
-    if (success) {
-      await loadFiles();
-      setShowUpload(false);
-    } else {
-      alert('Error al guardar archivo');
-    }
-    
-    setUploading(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  // Editar archivo existente
+  const handleEdit = async (fileName: string) => {
+    const file = await localFS.getFile(fileName);
+    if (file) {
+      const text = await file.text();
+      setEditorContent(text);
+      setCurrentFileName(fileName);
+      setViewMode('editor');
+    } else {
+      alert('Error al cargar archivo');
+    }
+  };
+
+  // Guardar documento
+  const handleSave = async () => {
+    if (!editorContent.trim()) {
+      alert('El documento está vacío');
+      return;
+    }
+
+    let fileName = currentFileName;
+    if (!fileName) {
+      fileName = prompt('Nombre del archivo:', 'documento.txt') || '';
+      if (!fileName) return;
+      if (!fileName.includes('.')) fileName += '.txt';
+    }
+
+    setSaving(true);
+    const blob = new Blob([editorContent], { type: 'text/plain' });
+    const success = await localFS.saveFile(fileName, blob);
+    
+    if (success) {
+      await loadFiles();
+      setViewMode('list');
+      setEditorContent('');
+      setCurrentFileName('');
+    } else {
+      alert('Error al guardar');
+    }
+    setSaving(false);
+  };
+
+  // Descargar archivo
   const handleDownload = async (fileName: string) => {
     const file = await localFS.getFile(fileName);
     if (file) {
@@ -92,50 +147,20 @@ export default function EscritosSection() {
       a.download = fileName;
       a.click();
       URL.revokeObjectURL(url);
-    } else {
-      alert('Error al leer archivo');
     }
   };
 
+  // Eliminar archivo
   const handleDelete = async (fileName: string) => {
     if (!confirm(`¿Eliminar "${fileName}"?`)) return;
-    
     const success = await localFS.deleteFile(fileName);
-    if (success) {
-      await loadFiles();
-    } else {
-      alert('Error al eliminar');
-    }
-  };
-
-  const createBlankDoc = async () => {
-    const docContent = new Blob(
-      [''],
-      { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }
-    );
-    
-    const fileName = `documento_${Date.now()}.docx`;
-    const success = await localFS.saveFile(fileName, docContent);
-    
-    if (success) {
-      await loadFiles();
-      handleDownload(fileName);
-    } else {
-      alert('Error al crear documento');
-    }
+    if (success) await loadFiles();
   };
 
   const formatSize = (bytes: number) => {
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-  };
-
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleDateString('es-MX', {
-      day: 'numeric',
-      month: 'short'
-    });
   };
 
   // Navegador no soportado
@@ -146,13 +171,10 @@ export default function EscritosSection() {
           <img src="/btn-escrito.jpg" alt="Escrito" className="w-12 h-12 rounded-xl object-cover" />
           <h2 className="text-xl font-bold text-stone-800">Escritos</h2>
         </div>
-        
         <div className="text-center py-8">
           <span className="text-4xl mb-4 block">⚠️</span>
           <p className="text-stone-700 font-medium mb-2">Navegador no compatible</p>
           <p className="text-stone-500 text-sm">
-            Tu navegador no soporta guardar archivos localmente.
-            <br />
             Usa <strong>Chrome actualizado</strong> para esta función.
           </p>
         </div>
@@ -160,83 +182,73 @@ export default function EscritosSection() {
     );
   }
 
-  // Pantalla de selección de carpeta
-  if (showFolderPicker && !hasFolder) {
+  // Selector de carpeta
+  if (viewMode === 'folder-picker' || !hasFolder) {
     return (
       <div className="bg-white rounded-2xl p-6 shadow-lg border border-stone-200">
         <div className="flex items-center gap-3 mb-6">
           <img src="/btn-escrito.jpg" alt="Escrito" className="w-12 h-12 rounded-xl object-cover" />
           <h2 className="text-xl font-bold text-stone-800">Escritos</h2>
         </div>
-        
         <div className="text-center py-6">
           <span className="text-4xl mb-4 block">📁</span>
           <p className="text-stone-700 font-medium mb-2">Elige dónde guardar tus documentos</p>
           <p className="text-stone-500 text-sm mb-4">
-            Selecciona una carpeta en tu celular o tarjeta SD.
-            <br />
-            Los archivos se guardarán ahí y podrás verlos en tu explorador.
+            Selecciona una carpeta en tu celular o SD.
           </p>
-          
           <div className="flex gap-3 justify-center">
-            <button
-              onClick={handleSelectFolder}
-              className="px-6 py-3 bg-gradient-to-b from-emerald-500 to-emerald-600 text-white rounded-xl font-semibold shadow-md hover:from-emerald-600 hover:to-emerald-700 transition"
-            >
+            <button onClick={handleSelectFolder}
+              className="px-6 py-3 bg-gradient-to-b from-emerald-500 to-emerald-600 text-white rounded-xl font-semibold shadow-md hover:from-emerald-600 hover:to-emerald-700 transition">
               📂 Elegir carpeta
             </button>
-            <button
-              onClick={() => setShowFolderPicker(false)}
-              className="px-6 py-3 bg-stone-100 text-stone-600 rounded-xl font-semibold hover:bg-stone-200 transition"
-            >
-              Cancelar
-            </button>
+            {hasFolder && (
+              <button onClick={() => setViewMode('list')}
+                className="px-6 py-3 bg-stone-100 text-stone-600 rounded-xl font-semibold hover:bg-stone-200 transition">
+                Cancelar
+              </button>
+            )}
           </div>
         </div>
       </div>
     );
   }
 
-  // Sin carpeta seleccionada - mostrar opciones básicas
-  if (!hasFolder) {
+  // Editor
+  if (viewMode === 'editor') {
     return (
       <div className="bg-white rounded-2xl p-6 shadow-lg border border-stone-200">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <img src="/btn-escrito.jpg" alt="Escrito" className="w-12 h-12 rounded-xl object-cover" />
-            <h2 className="text-xl font-bold text-stone-800">Escritos</h2>
+            <button onClick={() => setViewMode('list')} className="text-stone-400 hover:text-stone-600">←</button>
+            <h2 className="text-xl font-bold text-stone-800">
+              {currentFileName || 'Nuevo escrito'}
+            </h2>
           </div>
-        </div>
-
-        {/* Opciones */}
-        <div className="space-y-3">
-          <Link href="/ai?prompt=redactar"
-            className="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 rounded-xl transition border border-purple-200">
-            <span className="text-2xl">🤖</span>
-            <div>
-              <p className="font-semibold text-purple-800">Generar con IA</p>
-              <p className="text-sm text-purple-600">Claude redacta tu escrito</p>
-            </div>
-          </Link>
-
-          <button
-            onClick={() => setShowFolderPicker(true)}
-            className="w-full flex items-center gap-3 p-4 bg-gradient-to-r from-emerald-50 to-emerald-100 hover:from-emerald-100 hover:to-emerald-200 rounded-xl transition border border-emerald-200 text-left"
-          >
-            <span className="text-2xl">📂</span>
-            <div>
-              <p className="font-semibold text-emerald-800">Guardar en mi celular</p>
-              <p className="text-sm text-emerald-600">Elegir carpeta para documentos</p>
-            </div>
+          <button onClick={handleSave} disabled={saving}
+            className="px-4 py-2 bg-gradient-to-b from-emerald-500 to-emerald-600 text-white rounded-xl font-semibold shadow-md hover:from-emerald-600 hover:to-emerald-700 transition disabled:opacity-50">
+            {saving ? 'Guardando...' : '💾 Guardar'}
           </button>
         </div>
+        
+        <textarea
+          value={editorContent}
+          onChange={(e) => setEditorContent(e.target.value)}
+          placeholder="Escribe tu documento aquí..."
+          className="w-full h-80 p-4 border border-stone-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500 text-stone-800"
+        />
+        
+        <p className="text-xs text-stone-400 mt-2 text-right">
+          {editorContent.length} caracteres
+        </p>
       </div>
     );
   }
 
-  // Con carpeta seleccionada
+  // Lista de documentos
   return (
     <div className="bg-white rounded-2xl p-6 shadow-lg border border-stone-200">
+      <input ref={fileInputRef} type="file" accept=".txt,.md,.doc,.docx" onChange={handleFileSelect} className="hidden" />
+      
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <img src="/btn-escrito.jpg" alt="Escrito" className="w-12 h-12 rounded-xl object-cover" />
@@ -244,89 +256,61 @@ export default function EscritosSection() {
         </div>
       </div>
 
-      {/* Carpeta seleccionada */}
+      {/* Carpeta actual */}
       <div className="flex items-center justify-between p-3 bg-emerald-50 rounded-xl border border-emerald-200 mb-4">
         <div className="flex items-center gap-2">
           <span className="text-lg">📂</span>
           <span className="text-emerald-800 font-medium text-sm">{folderName}</span>
         </div>
-        <button
-          onClick={handleChangeFolder}
-          className="text-xs text-emerald-600 hover:text-emerald-800"
-        >
+        <button onClick={handleChangeFolder} className="text-xs text-emerald-600 hover:text-emerald-800">
           Cambiar
         </button>
       </div>
 
-      {/* Opciones */}
-      <div className="space-y-3 mb-6">
-        <button onClick={() => setShowUpload(!showUpload)}
-          className="w-full flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 rounded-xl transition border border-blue-200 text-left">
-          <span className="text-2xl">📤</span>
-          <div>
-            <p className="font-semibold text-blue-800">Subir formato</p>
-            <p className="text-sm text-blue-600">Guardar archivo en la carpeta</p>
-          </div>
+      {/* Botones principales */}
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        <button onClick={handleNewDoc}
+          className="flex items-center justify-center gap-2 p-4 bg-gradient-to-b from-blue-500 to-blue-600 text-white rounded-xl font-semibold shadow-md hover:from-blue-600 hover:to-blue-700 transition">
+          ✏️ Nuevo Escrito
         </button>
-
-        {showUpload && (
-          <div className="p-4 bg-blue-50 rounded-xl border border-blue-200 animate-fadeIn">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".docx,.doc,.pdf,.txt"
-              onChange={handleUpload}
-              disabled={uploading}
-              className="w-full text-sm text-stone-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-500 file:text-white file:font-medium hover:file:bg-blue-600"
-            />
-            {uploading && <p className="text-sm text-blue-600 mt-2">Guardando...</p>}
-          </div>
-        )}
-
-        <button onClick={createBlankDoc}
-          className="w-full flex items-center gap-3 p-4 bg-gradient-to-r from-stone-50 to-stone-100 hover:from-stone-100 hover:to-stone-200 rounded-xl transition border border-stone-200 text-left">
-          <span className="text-2xl">📝</span>
-          <div>
-            <p className="font-semibold text-stone-800">Documento en blanco</p>
-            <p className="text-sm text-stone-600">Crear Word vacío</p>
-          </div>
+        <button onClick={handleFromFile}
+          className="flex items-center justify-center gap-2 p-4 bg-gradient-to-b from-purple-500 to-purple-600 text-white rounded-xl font-semibold shadow-md hover:from-purple-600 hover:to-purple-700 transition">
+          📄 Desde Archivo
         </button>
       </div>
 
       {/* Lista de archivos */}
       <div className="border-t border-stone-200 pt-4">
-        <h3 className="font-semibold text-stone-700 mb-3 flex items-center gap-2">
-          📁 Archivos en carpeta
-          <span className="text-xs bg-stone-100 px-2 py-0.5 rounded-full">{files.length}</span>
+        <h3 className="font-semibold text-stone-700 mb-3">
+          Mis documentos <span className="text-xs bg-stone-100 px-2 py-0.5 rounded-full ml-1">{files.length}</span>
         </h3>
 
         {loading ? (
           <p className="text-stone-400 text-center py-4">Cargando...</p>
         ) : files.length === 0 ? (
-          <p className="text-stone-400 text-center py-4 text-sm">Carpeta vacía</p>
+          <p className="text-stone-400 text-center py-4 text-sm">Sin documentos</p>
         ) : (
           <div className="space-y-2 max-h-60 overflow-y-auto">
             {files.map(file => (
-              <div key={file.name}
-                className="flex items-center justify-between p-3 bg-stone-50 rounded-xl border border-stone-100 hover:border-stone-300 transition">
+              <div key={file.name} className="flex items-center justify-between p-3 bg-stone-50 rounded-xl border border-stone-100">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <span className="text-lg">
-                    {file.name.endsWith('.pdf') ? '📕' : file.name.endsWith('.docx') || file.name.endsWith('.doc') ? '📄' : '📃'}
-                  </span>
+                  <span className="text-lg">{file.name.endsWith('.pdf') ? '📕' : '📄'}</span>
                   <div className="min-w-0">
                     <p className="font-medium text-stone-800 truncate">{file.name}</p>
-                    <p className="text-xs text-stone-500">
-                      {formatSize(file.size)} • {formatDate(file.lastModified)}
-                    </p>
+                    <p className="text-xs text-stone-500">{formatSize(file.size)}</p>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-1">
+                  <button onClick={() => handleEdit(file.name)}
+                    className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200">
+                    ✏️
+                  </button>
                   <button onClick={() => handleDownload(file.name)}
-                    className="px-3 py-1.5 text-sm bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition">
+                    className="px-2 py-1 text-xs bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200">
                     ⬇️
                   </button>
                   <button onClick={() => handleDelete(file.name)}
-                    className="px-3 py-1.5 text-sm bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition">
+                    className="px-2 py-1 text-xs bg-red-100 text-red-600 rounded-lg hover:bg-red-200">
                     🗑️
                   </button>
                 </div>
