@@ -7,12 +7,21 @@ import EscritosSection from '@/components/EscritosSection';
 
 interface Client { id: string; name: string; phone: string; email: string | null; }
 interface Case { id: string; matter: string; caseNumber: string | null; status: string; client: { name: string }; }
+interface TerminosStats { totalPendientes: number; proximosVencer: number; vencidos: number; }
 
 export default function HomePage() {
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [clients, setClients] = useState<Client[]>([]);
   const [cases, setCases] = useState<Case[]>([]);
   const [loading, setLoading] = useState(false);
+  const [terminosStats, setTerminosStats] = useState<TerminosStats>({ totalPendientes: 0, proximosVencer: 0, vencidos: 0 });
+
+  // Cargar stats de términos al inicio
+  useEffect(() => {
+    fetch('/api/terminos?limit=1').then(r => r.json()).then(d => {
+      if (d.stats) setTerminosStats(d.stats);
+    }).catch(() => {});
+  }, []);
 
   const loadData = async (section: string) => {
     setLoading(true);
@@ -50,6 +59,27 @@ export default function HomePage() {
 
       {/* Main Content */}
       <main className="px-4 py-6 max-w-lg mx-auto">
+        {/* Alerta de términos próximos/vencidos */}
+        {!activeSection && (terminosStats.vencidos > 0 || terminosStats.proximosVencer > 0) && (
+          <Link href="/terminos" className="block mb-4 p-4 rounded-2xl border shadow-lg transition hover:scale-[1.02] active:scale-95 animate-pulse-slow"
+            style={{
+              background: terminosStats.vencidos > 0 ? 'linear-gradient(135deg, #fecaca 0%, #fca5a5 100%)' : 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+              borderColor: terminosStats.vencidos > 0 ? '#f87171' : '#fbbf24'
+            }}>
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">{terminosStats.vencidos > 0 ? '🚨' : '⚠️'}</span>
+              <div>
+                <p className="font-bold text-stone-800">
+                  {terminosStats.vencidos > 0 
+                    ? `¡${terminosStats.vencidos} término(s) vencido(s)!` 
+                    : `${terminosStats.proximosVencer} término(s) por vencer`}
+                </p>
+                <p className="text-sm text-stone-600">Toca para revisar →</p>
+              </div>
+            </div>
+          </Link>
+        )}
+
         {!activeSection ? (
           <div className="grid grid-cols-2 gap-4">
             {/* Cliente */}
@@ -213,7 +243,17 @@ export default function HomePage() {
 
         {/* Quick Links */}
         {!activeSection && (
-          <div className="mt-6 flex justify-center gap-3">
+          <div className="mt-6 flex justify-center gap-3 flex-wrap">
+            <Link href="/terminos" className={`px-4 py-2 bg-white rounded-xl font-medium text-sm shadow border transition ${
+              terminosStats.vencidos > 0 ? 'border-red-300 text-red-600 hover:bg-red-50' :
+              terminosStats.proximosVencer > 0 ? 'border-amber-300 text-amber-600 hover:bg-amber-50' :
+              'border-stone-200 text-stone-600 hover:border-amber-300'
+            }`}>
+              ⏰ Términos {(terminosStats.vencidos + terminosStats.proximosVencer) > 0 && 
+                <span className="ml-1 px-1.5 py-0.5 bg-red-500 text-white text-xs rounded-full">
+                  {terminosStats.vencidos + terminosStats.proximosVencer}
+                </span>}
+            </Link>
             <Link href="/tareas" className="px-4 py-2 bg-white rounded-xl text-stone-600 font-medium text-sm shadow border border-stone-200 hover:border-amber-300 transition">
               ✅ Tareas
             </Link>
@@ -239,6 +279,13 @@ export default function HomePage() {
         }
         .animate-fadeIn {
           animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes pulse-slow {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.85; }
+        }
+        .animate-pulse-slow {
+          animation: pulse-slow 2s ease-in-out infinite;
         }
       `}</style>
     </div>
