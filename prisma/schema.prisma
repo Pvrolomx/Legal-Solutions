@@ -56,6 +56,7 @@ model Case {
   documents       Document[]
   tasks           Task[]
   aiChats         AIChat[]
+  terminos        Termino[]
   
   @@index([clientId])
   @@index([status])
@@ -154,4 +155,25 @@ model Template {
   content       String
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+}
+
+model Termino {
+  id              String    @id @default(cuid())
+  caseId          String
+  titulo          String
+  descripcion     String?
+  fechaVencimiento DateTime
+  tipo            String    @default("procesal")  // fatal, procesal, convencional
+  diasAlerta      Int       @default(3)
+  estado          String    @default("pendiente") // pendiente, cumplido, vencido
+  recordatorio    Boolean   @default(true)
+  notas           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  case            Case      @relation(fields: [caseId], references: [id])
+  
+  @@index([caseId])
+  @@index([estado])
+  @@index([fechaVencimiento])
 }
