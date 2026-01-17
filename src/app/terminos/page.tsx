@@ -27,9 +27,9 @@ interface Stats {
 }
 
 const TIPO_COLORS: Record<string, string> = {
-  fatal: 'bg-red-500/20 text-red-400 border-red-500/30',
-  procesal: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-  convencional: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+  fatal: 'bg-red-100 text-red-700 border-red-200',
+  procesal: 'bg-amber-100 text-amber-700 border-amber-200',
+  convencional: 'bg-blue-100 text-blue-700 border-blue-200',
 };
 
 const TIPO_LABELS: Record<string, string> = {
@@ -47,12 +47,12 @@ function diasRestantes(fecha: string): number {
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
 }
 
-function getUrgenciaColor(dias: number, estado: string): string {
-  if (estado === 'cumplido') return 'border-green-500/30 bg-green-500/5';
-  if (dias < 0) return 'border-red-500/50 bg-red-500/10'; // vencido
-  if (dias <= 1) return 'border-red-500/50 bg-red-500/10'; // urgente
-  if (dias <= 3) return 'border-amber-500/50 bg-amber-500/10'; // próximo
-  return 'border-white/10 bg-white/5'; // normal
+function getUrgenciaStyle(dias: number, estado: string): string {
+  if (estado === 'cumplido') return 'border-green-200 bg-green-50';
+  if (dias < 0) return 'border-red-300 bg-red-50'; // vencido
+  if (dias <= 1) return 'border-red-300 bg-red-50'; // urgente
+  if (dias <= 3) return 'border-amber-300 bg-amber-50'; // próximo
+  return 'border-stone-200 bg-white'; // normal
 }
 
 export default function TerminosPage() {
@@ -87,7 +87,6 @@ export default function TerminosPage() {
     loadTerminos();
   };
 
-  // Filtrar y marcar vencidos automáticamente
   const hoy = new Date();
   const filtered = terminos.filter(t => {
     const dias = diasRestantes(t.fechaVencimiento);
@@ -100,7 +99,6 @@ export default function TerminosPage() {
     return true;
   });
 
-  // Ordenar por urgencia
   const sorted = [...filtered].sort((a, b) => {
     const diasA = diasRestantes(a.fechaVencimiento);
     const diasB = diasRestantes(b.fechaVencimiento);
@@ -108,41 +106,43 @@ export default function TerminosPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <header className="pt-6 px-4">
-        <div className="max-w-2xl mx-auto">
-          <Link href="/" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition mb-4">
+    <div className="min-h-screen bg-stone-100">
+      {/* Header */}
+      <header className="bg-white border-b border-stone-200 pt-6 pb-4 px-4">
+        <div className="max-w-lg mx-auto">
+          <Link href="/" className="inline-flex items-center gap-2 text-stone-400 hover:text-stone-800 transition mb-3">
             <span>←</span> Inicio
           </Link>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-amber-500 rounded-xl flex items-center justify-center">
+              <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
                 <span className="text-2xl">⏰</span>
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white">Términos</h1>
-                <p className="text-sm text-slate-400">
+                <h1 className="text-2xl font-bold text-stone-800">Términos</h1>
+                <p className="text-sm text-stone-500">
                   {stats.totalPendientes} pendientes • 
-                  <span className={stats.proximosVencer > 0 ? ' text-amber-400' : ''}> {stats.proximosVencer} próximos</span> • 
-                  <span className={stats.vencidos > 0 ? ' text-red-400' : ''}> {stats.vencidos} vencidos</span>
+                  <span className={stats.proximosVencer > 0 ? ' text-amber-600 font-medium' : ''}> {stats.proximosVencer} próximos</span> • 
+                  <span className={stats.vencidos > 0 ? ' text-red-600 font-medium' : ''}> {stats.vencidos} vencidos</span>
                 </p>
               </div>
             </div>
-            <button onClick={() => setShowModal(true)} className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-medium transition">
+            <button onClick={() => setShowModal(true)} 
+              className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-medium transition shadow-md">
               + Nuevo
             </button>
           </div>
         </div>
       </header>
 
-      <main className="px-4 py-6 max-w-2xl mx-auto">
+      <main className="px-4 py-6 max-w-lg mx-auto">
         {/* Alert Banner */}
         {stats.vencidos > 0 && (
-          <div className="mb-4 p-4 bg-red-500/20 border border-red-500/30 rounded-2xl flex items-center gap-3">
+          <div className="mb-4 p-4 bg-red-100 border border-red-200 rounded-2xl flex items-center gap-3">
             <span className="text-2xl">🚨</span>
             <div>
-              <p className="text-red-400 font-semibold">¡Atención! Tienes {stats.vencidos} término(s) vencido(s)</p>
-              <p className="text-red-300/70 text-sm">Revisa y actualiza el estado de tus términos</p>
+              <p className="text-red-700 font-semibold">¡Atención! Tienes {stats.vencidos} término(s) vencido(s)</p>
+              <p className="text-red-600/70 text-sm">Revisa y actualiza el estado de tus términos</p>
             </div>
           </div>
         )}
@@ -156,8 +156,10 @@ export default function TerminosPage() {
             { key: 'todos', label: 'Todos' },
           ] as const).map(f => (
             <button key={f.key} onClick={() => setFilter(f.key)}
-              className={`px-4 py-2 rounded-xl font-medium transition whitespace-nowrap ${
-                filter === f.key ? 'bg-amber-500 text-white' : 'bg-white/10 text-slate-400 hover:bg-white/20'
+              className={`px-4 py-2 rounded-xl font-medium transition whitespace-nowrap shadow-sm ${
+                filter === f.key 
+                  ? 'bg-amber-500 text-white' 
+                  : 'bg-white text-stone-600 border border-stone-200 hover:border-amber-300'
               }`}>
               {f.label}
             </button>
@@ -166,12 +168,12 @@ export default function TerminosPage() {
 
         {/* Términos List */}
         {loading ? (
-          <p className="text-slate-400 text-center py-12">Cargando...</p>
+          <p className="text-stone-400 text-center py-12">Cargando...</p>
         ) : sorted.length === 0 ? (
-          <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-12 text-center border border-white/10">
+          <div className="bg-white rounded-2xl p-12 text-center border border-stone-200 shadow-lg">
             <span className="text-5xl block mb-4">⏰</span>
-            <p className="text-slate-400 mb-4">No hay términos {filter !== 'todos' ? filter + 's' : ''}</p>
-            <button onClick={() => setShowModal(true)} className="text-amber-400 font-medium hover:underline">+ Crear término</button>
+            <p className="text-stone-500 mb-4">No hay términos {filter !== 'todos' ? filter + 's' : ''}</p>
+            <button onClick={() => setShowModal(true)} className="text-amber-600 font-medium hover:underline">+ Crear término</button>
           </div>
         ) : (
           <div className="space-y-3">
@@ -180,26 +182,26 @@ export default function TerminosPage() {
               const vencido = dias < 0 && t.estado === 'pendiente';
               
               return (
-                <div key={t.id} className={`backdrop-blur-lg rounded-2xl p-4 border ${getUrgenciaColor(dias, t.estado)} ${t.estado === 'cumplido' ? 'opacity-60' : ''}`}>
+                <div key={t.id} className={`rounded-2xl p-4 border shadow-sm ${getUrgenciaStyle(dias, t.estado)} ${t.estado === 'cumplido' ? 'opacity-60' : ''}`}>
                   <div className="flex items-start gap-3">
                     {/* Checkbox cumplido */}
                     <button onClick={() => t.estado !== 'cumplido' && marcarCumplido(t.id)}
                       disabled={t.estado === 'cumplido'}
                       className={`mt-1 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition ${
-                        t.estado === 'cumplido' ? 'bg-green-500 border-green-500' : 'border-slate-500 hover:border-green-500'
+                        t.estado === 'cumplido' ? 'bg-green-500 border-green-500' : 'border-stone-300 hover:border-green-500'
                       }`}>
                       {t.estado === 'cumplido' && <span className="text-white text-sm">✓</span>}
                     </button>
                     
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className={`font-semibold text-white ${t.estado === 'cumplido' ? 'line-through' : ''}`}>
+                        <p className={`font-semibold text-stone-800 ${t.estado === 'cumplido' ? 'line-through' : ''}`}>
                           {t.titulo}
                         </p>
                         {vencido && <span className="px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">VENCIDO</span>}
                       </div>
                       
-                      {t.descripcion && <p className="text-sm text-slate-400 mt-1">{t.descripcion}</p>}
+                      {t.descripcion && <p className="text-sm text-stone-500 mt-1">{t.descripcion}</p>}
                       
                       <div className="flex flex-wrap items-center gap-2 mt-2">
                         <span className={`text-xs px-2 py-1 rounded-full border ${TIPO_COLORS[t.tipo]}`}>
@@ -207,9 +209,9 @@ export default function TerminosPage() {
                         </span>
                         
                         <span className={`text-xs font-medium ${
-                          vencido ? 'text-red-400' :
-                          dias <= 1 ? 'text-red-400' : 
-                          dias <= 3 ? 'text-amber-400' : 'text-slate-400'
+                          vencido ? 'text-red-600' :
+                          dias <= 1 ? 'text-red-600' : 
+                          dias <= 3 ? 'text-amber-600' : 'text-stone-500'
                         }`}>
                           {t.estado === 'cumplido' ? '✓ Cumplido' :
                            vencido ? `Venció hace ${Math.abs(dias)} día(s)` :
@@ -218,22 +220,22 @@ export default function TerminosPage() {
                            `Vence en ${dias} días`}
                         </span>
                         
-                        <span className="text-xs text-slate-500">
+                        <span className="text-xs text-stone-400">
                           {new Date(t.fechaVencimiento).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })}
                         </span>
                       </div>
                       
                       {/* Caso asociado */}
-                      <div className="mt-2 pt-2 border-t border-white/10">
-                        <Link href={`/casos/${t.case.id}`} className="text-xs text-blue-400 hover:underline flex items-center gap-1">
+                      <div className="mt-2 pt-2 border-t border-stone-200">
+                        <Link href={`/casos/${t.case.id}`} className="text-xs text-blue-600 hover:underline flex items-center gap-1">
                           <span>📁</span>
                           <span className="truncate">{t.case.matter}</span>
-                          {t.case.client && <span className="text-slate-500">• {t.case.client.name}</span>}
+                          {t.case.client && <span className="text-stone-400">• {t.case.client.name}</span>}
                         </Link>
                       </div>
                     </div>
                     
-                    <button onClick={() => deleteTermino(t.id)} className="p-2 hover:bg-red-500/20 rounded-lg text-slate-500 hover:text-red-400 transition">
+                    <button onClick={() => deleteTermino(t.id)} className="p-2 hover:bg-red-100 rounded-lg text-stone-400 hover:text-red-500 transition">
                       🗑
                     </button>
                   </div>
@@ -244,9 +246,9 @@ export default function TerminosPage() {
         )}
       
         {/* Footer */}
-        <footer className="py-6 text-center">
-          <p className="text-slate-500 text-sm">
-            Hecho por <span className="text-amber-500">Colmena</span> - 2026
+        <footer className="mt-12 text-center">
+          <p className="text-stone-400 text-sm">
+            Hecho por <span className="text-amber-600">Colmena</span> - 2026
           </p>
         </footer>
       </main>
@@ -293,21 +295,21 @@ function NewTerminoModal({ onClose, onSave }: { onClose: () => void; onSave: () 
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-slate-800 rounded-3xl p-6 w-full max-w-md border border-white/10 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-        <h2 className="text-xl font-bold text-white mb-4">Nuevo Término</h2>
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <h2 className="text-xl font-bold text-stone-800 mb-4">Nuevo Término</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-sm text-slate-400">Título *</label>
+            <label className="text-sm text-stone-500">Título *</label>
             <input type="text" value={form.titulo} onChange={e => setForm({...form, titulo: e.target.value})}
               placeholder="Ej: Contestar demanda"
-              className="w-full mt-1 px-4 py-2 bg-white/10 border border-white/10 rounded-xl text-white placeholder-slate-500" required />
+              className="w-full mt-1 px-4 py-2 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 placeholder-stone-400 focus:outline-none focus:border-amber-400" required />
           </div>
           
           <div>
-            <label className="text-sm text-slate-400">Expediente *</label>
+            <label className="text-sm text-stone-500">Expediente *</label>
             <select value={form.caseId} onChange={e => setForm({...form, caseId: e.target.value})}
-              className="w-full mt-1 px-4 py-2 bg-white/10 border border-white/10 rounded-xl text-white" required>
+              className="w-full mt-1 px-4 py-2 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 focus:outline-none focus:border-amber-400" required>
               <option value="">Seleccionar expediente...</option>
               {cases.map(c => (
                 <option key={c.id} value={c.id}>
@@ -319,15 +321,15 @@ function NewTerminoModal({ onClose, onSave }: { onClose: () => void; onSave: () 
           
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm text-slate-400">Fecha vencimiento *</label>
+              <label className="text-sm text-stone-500">Fecha vencimiento *</label>
               <input type="date" value={form.fechaVencimiento} onChange={e => setForm({...form, fechaVencimiento: e.target.value})}
-                className="w-full mt-1 px-4 py-2 bg-white/10 border border-white/10 rounded-xl text-white" required />
+                className="w-full mt-1 px-4 py-2 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 focus:outline-none focus:border-amber-400" required />
             </div>
             <div>
-              <label className="text-sm text-slate-400">Tipo</label>
+              <label className="text-sm text-stone-500">Tipo</label>
               <select value={form.tipo} onChange={e => setForm({...form, tipo: e.target.value})}
-                className="w-full mt-1 px-4 py-2 bg-white/10 border border-white/10 rounded-xl text-white">
-                <option value="fatal">⚠️ Fatal (improrrogable)</option>
+                className="w-full mt-1 px-4 py-2 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 focus:outline-none focus:border-amber-400">
+                <option value="fatal">⚠️ Fatal</option>
                 <option value="procesal">⏰ Procesal</option>
                 <option value="convencional">📅 Convencional</option>
               </select>
@@ -335,25 +337,25 @@ function NewTerminoModal({ onClose, onSave }: { onClose: () => void; onSave: () 
           </div>
           
           <div>
-            <label className="text-sm text-slate-400">Descripción</label>
+            <label className="text-sm text-stone-500">Descripción</label>
             <textarea value={form.descripcion} onChange={e => setForm({...form, descripcion: e.target.value})}
               rows={2} placeholder="Detalles del término..."
-              className="w-full mt-1 px-4 py-2 bg-white/10 border border-white/10 rounded-xl text-white placeholder-slate-500" />
+              className="w-full mt-1 px-4 py-2 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 placeholder-stone-400 focus:outline-none focus:border-amber-400" />
           </div>
           
           <div>
-            <label className="text-sm text-slate-400">Días de anticipación para alerta</label>
+            <label className="text-sm text-stone-500">Días de anticipación para alerta</label>
             <input type="number" min="1" max="30" value={form.diasAlerta} 
               onChange={e => setForm({...form, diasAlerta: parseInt(e.target.value) || 3})}
-              className="w-full mt-1 px-4 py-2 bg-white/10 border border-white/10 rounded-xl text-white" />
+              className="w-full mt-1 px-4 py-2 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 focus:outline-none focus:border-amber-400" />
           </div>
           
           <div className="flex gap-3 pt-4">
             <button type="submit" disabled={saving}
-              className="flex-1 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-semibold disabled:opacity-50">
+              className="flex-1 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-semibold disabled:opacity-50 shadow-md">
               {saving ? 'Guardando...' : 'Crear Término'}
             </button>
-            <button type="button" onClick={onClose} className="px-6 py-3 bg-white/10 text-white rounded-xl">
+            <button type="button" onClick={onClose} className="px-6 py-3 bg-stone-100 text-stone-600 rounded-xl hover:bg-stone-200 transition">
               Cancelar
             </button>
           </div>
