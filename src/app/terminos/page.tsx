@@ -47,12 +47,12 @@ function diasRestantes(fecha: string): number {
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
 }
 
-function getUrgenciaStyle(dias: number, estado: string): string {
+function getUrgenciaColor(dias: number, estado: string): string {
   if (estado === 'cumplido') return 'border-green-200 bg-green-50';
-  if (dias < 0) return 'border-red-300 bg-red-50'; // vencido
-  if (dias <= 1) return 'border-red-300 bg-red-50'; // urgente
-  if (dias <= 3) return 'border-amber-300 bg-amber-50'; // próximo
-  return 'border-stone-200 bg-white'; // normal
+  if (dias < 0) return 'border-red-300 bg-red-50';
+  if (dias <= 1) return 'border-red-300 bg-red-50';
+  if (dias <= 3) return 'border-amber-300 bg-amber-50';
+  return 'border-stone-200 bg-white';
 }
 
 export default function TerminosPage() {
@@ -87,7 +87,6 @@ export default function TerminosPage() {
     loadTerminos();
   };
 
-  const hoy = new Date();
   const filtered = terminos.filter(t => {
     const dias = diasRestantes(t.fechaVencimiento);
     const estaVencido = dias < 0 && t.estado === 'pendiente';
@@ -99,15 +98,10 @@ export default function TerminosPage() {
     return true;
   });
 
-  const sorted = [...filtered].sort((a, b) => {
-    const diasA = diasRestantes(a.fechaVencimiento);
-    const diasB = diasRestantes(b.fechaVencimiento);
-    return diasA - diasB;
-  });
+  const sorted = [...filtered].sort((a, b) => diasRestantes(a.fechaVencimiento) - diasRestantes(b.fechaVencimiento));
 
   return (
     <div className="min-h-screen bg-stone-100">
-      {/* Header */}
       <header className="bg-white border-b border-stone-200 pt-6 pb-4 px-4">
         <div className="max-w-lg mx-auto">
           <Link href="/" className="inline-flex items-center gap-2 text-stone-400 hover:text-stone-800 transition mb-3">
@@ -122,13 +116,12 @@ export default function TerminosPage() {
                 <h1 className="text-2xl font-bold text-stone-800">Términos</h1>
                 <p className="text-sm text-stone-500">
                   {stats.totalPendientes} pendientes • 
-                  <span className={stats.proximosVencer > 0 ? ' text-amber-600 font-medium' : ''}> {stats.proximosVencer} próximos</span> • 
-                  <span className={stats.vencidos > 0 ? ' text-red-600 font-medium' : ''}> {stats.vencidos} vencidos</span>
+                  <span className={stats.proximosVencer > 0 ? ' text-amber-600' : ''}> {stats.proximosVencer} próximos</span> • 
+                  <span className={stats.vencidos > 0 ? ' text-red-600' : ''}> {stats.vencidos} vencidos</span>
                 </p>
               </div>
             </div>
-            <button onClick={() => setShowModal(true)} 
-              className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-medium transition shadow-md">
+            <button onClick={() => setShowModal(true)} className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-medium transition shadow-md">
               + Nuevo
             </button>
           </div>
@@ -136,7 +129,6 @@ export default function TerminosPage() {
       </header>
 
       <main className="px-4 py-6 max-w-lg mx-auto">
-        {/* Alert Banner */}
         {stats.vencidos > 0 && (
           <div className="mb-4 p-4 bg-red-100 border border-red-200 rounded-2xl flex items-center gap-3">
             <span className="text-2xl">🚨</span>
@@ -147,7 +139,6 @@ export default function TerminosPage() {
           </div>
         )}
 
-        {/* Filters */}
         <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
           {([
             { key: 'pendiente', label: 'Pendientes' },
@@ -156,21 +147,18 @@ export default function TerminosPage() {
             { key: 'todos', label: 'Todos' },
           ] as const).map(f => (
             <button key={f.key} onClick={() => setFilter(f.key)}
-              className={`px-4 py-2 rounded-xl font-medium transition whitespace-nowrap shadow-sm ${
-                filter === f.key 
-                  ? 'bg-amber-500 text-white' 
-                  : 'bg-white text-stone-600 border border-stone-200 hover:border-amber-300'
+              className={`px-4 py-2 rounded-xl font-medium transition whitespace-nowrap ${
+                filter === f.key ? 'bg-amber-500 text-white shadow-md' : 'bg-white text-stone-600 border border-stone-200 hover:border-amber-300'
               }`}>
               {f.label}
             </button>
           ))}
         </div>
 
-        {/* Términos List */}
         {loading ? (
           <p className="text-stone-400 text-center py-12">Cargando...</p>
         ) : sorted.length === 0 ? (
-          <div className="bg-white rounded-2xl p-12 text-center border border-stone-200 shadow-lg">
+          <div className="bg-white rounded-2xl p-12 text-center shadow-lg border border-stone-200">
             <span className="text-5xl block mb-4">⏰</span>
             <p className="text-stone-500 mb-4">No hay términos {filter !== 'todos' ? filter + 's' : ''}</p>
             <button onClick={() => setShowModal(true)} className="text-amber-600 font-medium hover:underline">+ Crear término</button>
@@ -182,9 +170,8 @@ export default function TerminosPage() {
               const vencido = dias < 0 && t.estado === 'pendiente';
               
               return (
-                <div key={t.id} className={`rounded-2xl p-4 border shadow-sm ${getUrgenciaStyle(dias, t.estado)} ${t.estado === 'cumplido' ? 'opacity-60' : ''}`}>
+                <div key={t.id} className={`rounded-2xl p-4 border shadow ${getUrgenciaColor(dias, t.estado)} ${t.estado === 'cumplido' ? 'opacity-60' : ''}`}>
                   <div className="flex items-start gap-3">
-                    {/* Checkbox cumplido */}
                     <button onClick={() => t.estado !== 'cumplido' && marcarCumplido(t.id)}
                       disabled={t.estado === 'cumplido'}
                       className={`mt-1 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition ${
@@ -195,37 +182,20 @@ export default function TerminosPage() {
                     
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className={`font-semibold text-stone-800 ${t.estado === 'cumplido' ? 'line-through' : ''}`}>
-                          {t.titulo}
-                        </p>
+                        <p className={`font-semibold text-stone-800 ${t.estado === 'cumplido' ? 'line-through' : ''}`}>{t.titulo}</p>
                         {vencido && <span className="px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">VENCIDO</span>}
                       </div>
                       
                       {t.descripcion && <p className="text-sm text-stone-500 mt-1">{t.descripcion}</p>}
                       
                       <div className="flex flex-wrap items-center gap-2 mt-2">
-                        <span className={`text-xs px-2 py-1 rounded-full border ${TIPO_COLORS[t.tipo]}`}>
-                          {TIPO_LABELS[t.tipo] || t.tipo}
+                        <span className={`text-xs px-2 py-1 rounded-full border ${TIPO_COLORS[t.tipo]}`}>{TIPO_LABELS[t.tipo] || t.tipo}</span>
+                        <span className={`text-xs font-medium ${vencido ? 'text-red-600' : dias <= 1 ? 'text-red-600' : dias <= 3 ? 'text-amber-600' : 'text-stone-500'}`}>
+                          {t.estado === 'cumplido' ? '✓ Cumplido' : vencido ? `Venció hace ${Math.abs(dias)} día(s)` : dias === 0 ? '¡Vence HOY!' : dias === 1 ? 'Vence MAÑANA' : `Vence en ${dias} días`}
                         </span>
-                        
-                        <span className={`text-xs font-medium ${
-                          vencido ? 'text-red-600' :
-                          dias <= 1 ? 'text-red-600' : 
-                          dias <= 3 ? 'text-amber-600' : 'text-stone-500'
-                        }`}>
-                          {t.estado === 'cumplido' ? '✓ Cumplido' :
-                           vencido ? `Venció hace ${Math.abs(dias)} día(s)` :
-                           dias === 0 ? '¡Vence HOY!' :
-                           dias === 1 ? 'Vence MAÑANA' :
-                           `Vence en ${dias} días`}
-                        </span>
-                        
-                        <span className="text-xs text-stone-400">
-                          {new Date(t.fechaVencimiento).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })}
-                        </span>
+                        <span className="text-xs text-stone-400">{new Date(t.fechaVencimiento).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                       </div>
                       
-                      {/* Caso asociado */}
                       <div className="mt-2 pt-2 border-t border-stone-200">
                         <Link href={`/casos/${t.case.id}`} className="text-xs text-blue-600 hover:underline flex items-center gap-1">
                           <span>📁</span>
@@ -235,9 +205,7 @@ export default function TerminosPage() {
                       </div>
                     </div>
                     
-                    <button onClick={() => deleteTermino(t.id)} className="p-2 hover:bg-red-100 rounded-lg text-stone-400 hover:text-red-500 transition">
-                      🗑
-                    </button>
+                    <button onClick={() => deleteTermino(t.id)} className="p-2 hover:bg-red-100 rounded-lg text-stone-400 hover:text-red-500 transition">🗑</button>
                   </div>
                 </div>
               );
@@ -245,18 +213,12 @@ export default function TerminosPage() {
           </div>
         )}
       
-        {/* Footer */}
         <footer className="mt-12 text-center">
-          <p className="text-stone-400 text-sm">
-            Hecho por <span className="text-amber-600">Colmena</span> - 2026
-          </p>
+          <p className="text-stone-400 text-sm">Hecho por <span className="text-amber-600">Colmena</span> - 2026</p>
         </footer>
       </main>
 
-      {/* New Termino Modal */}
-      {showModal && (
-        <NewTerminoModal onClose={() => setShowModal(false)} onSave={() => { loadTerminos(); setShowModal(false); }} />
-      )}
+      {showModal && <NewTerminoModal onClose={() => setShowModal(false)} onSave={() => { loadTerminos(); setShowModal(false); }} />}
     </div>
   );
 }
@@ -264,34 +226,18 @@ export default function TerminosPage() {
 function NewTerminoModal({ onClose, onSave }: { onClose: () => void; onSave: () => void }) {
   const [cases, setCases] = useState<Array<{ id: string; matter: string; caseNumber: string | null }>>([]);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({
-    titulo: '', 
-    descripcion: '', 
-    tipo: 'procesal', 
-    caseId: '', 
-    fechaVencimiento: '',
-    diasAlerta: 3,
-    notas: ''
-  });
+  const [form, setForm] = useState({ titulo: '', descripcion: '', tipo: 'procesal', caseId: '', fechaVencimiento: '', diasAlerta: 3, notas: '' });
 
-  useEffect(() => {
-    fetch('/api/cases?limit=100').then(r => r.json()).then(d => setCases(d.cases || []));
-  }, []);
+  useEffect(() => { fetch('/api/cases?limit=100').then(r => r.json()).then(d => setCases(d.cases || [])); }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.titulo) return alert('Título requerido');
     if (!form.caseId) return alert('Debe asociar a un expediente');
     if (!form.fechaVencimiento) return alert('Fecha de vencimiento requerida');
-    
     setSaving(true);
-    const res = await fetch('/api/terminos', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
-    });
-    if (res.ok) onSave();
-    else setSaving(false);
+    const res = await fetch('/api/terminos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+    if (res.ok) onSave(); else setSaving(false);
   };
 
   return (
@@ -301,24 +247,17 @@ function NewTerminoModal({ onClose, onSave }: { onClose: () => void; onSave: () 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="text-sm text-stone-500">Título *</label>
-            <input type="text" value={form.titulo} onChange={e => setForm({...form, titulo: e.target.value})}
-              placeholder="Ej: Contestar demanda"
+            <input type="text" value={form.titulo} onChange={e => setForm({...form, titulo: e.target.value})} placeholder="Ej: Contestar demanda"
               className="w-full mt-1 px-4 py-2 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 placeholder-stone-400 focus:outline-none focus:border-amber-400" required />
           </div>
-          
           <div>
             <label className="text-sm text-stone-500">Expediente *</label>
             <select value={form.caseId} onChange={e => setForm({...form, caseId: e.target.value})}
               className="w-full mt-1 px-4 py-2 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 focus:outline-none focus:border-amber-400" required>
               <option value="">Seleccionar expediente...</option>
-              {cases.map(c => (
-                <option key={c.id} value={c.id}>
-                  {c.caseNumber ? `${c.caseNumber} - ` : ''}{c.matter}
-                </option>
-              ))}
+              {cases.map(c => <option key={c.id} value={c.id}>{c.caseNumber ? `${c.caseNumber} - ` : ''}{c.matter}</option>)}
             </select>
           </div>
-          
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm text-stone-500">Fecha vencimiento *</label>
@@ -335,29 +274,16 @@ function NewTerminoModal({ onClose, onSave }: { onClose: () => void; onSave: () 
               </select>
             </div>
           </div>
-          
           <div>
             <label className="text-sm text-stone-500">Descripción</label>
-            <textarea value={form.descripcion} onChange={e => setForm({...form, descripcion: e.target.value})}
-              rows={2} placeholder="Detalles del término..."
+            <textarea value={form.descripcion} onChange={e => setForm({...form, descripcion: e.target.value})} rows={2} placeholder="Detalles del término..."
               className="w-full mt-1 px-4 py-2 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 placeholder-stone-400 focus:outline-none focus:border-amber-400" />
           </div>
-          
-          <div>
-            <label className="text-sm text-stone-500">Días de anticipación para alerta</label>
-            <input type="number" min="1" max="30" value={form.diasAlerta} 
-              onChange={e => setForm({...form, diasAlerta: parseInt(e.target.value) || 3})}
-              className="w-full mt-1 px-4 py-2 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 focus:outline-none focus:border-amber-400" />
-          </div>
-          
           <div className="flex gap-3 pt-4">
-            <button type="submit" disabled={saving}
-              className="flex-1 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-semibold disabled:opacity-50 shadow-md">
+            <button type="submit" disabled={saving} className="flex-1 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-semibold shadow-md disabled:opacity-50">
               {saving ? 'Guardando...' : 'Crear Término'}
             </button>
-            <button type="button" onClick={onClose} className="px-6 py-3 bg-stone-100 text-stone-600 rounded-xl hover:bg-stone-200 transition">
-              Cancelar
-            </button>
+            <button type="button" onClick={onClose} className="px-6 py-3 bg-stone-100 text-stone-600 rounded-xl hover:bg-stone-200">Cancelar</button>
           </div>
         </form>
       </div>
