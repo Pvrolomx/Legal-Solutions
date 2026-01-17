@@ -53,7 +53,7 @@ export default function HomePage() {
       <header className="bg-white border-b border-stone-200 pt-6 pb-4 px-6">
         <div className="max-w-lg mx-auto text-center">
           <img src="/logo.png" alt="Legal Solutions" className="h-20 mx-auto mb-2" />
-          <p className="text-stone-500 text-sm">Sistema de Gestión Legal con IA</p>
+          <p className="text-stone-500 text-sm">Sistema de Gestión Legal</p>
         </div>
       </header>
 
@@ -256,9 +256,6 @@ export default function HomePage() {
             </Link>
             <Link href="/tareas" className="px-4 py-2 bg-white rounded-xl text-stone-600 font-medium text-sm shadow border border-stone-200 hover:border-amber-300 transition">
               ✅ Tareas
-            </Link>
-            <Link href="/ai" className="px-4 py-2 bg-white rounded-xl text-stone-600 font-medium text-sm shadow border border-stone-200 hover:border-amber-300 transition">
-              🤖 IA
             </Link>
           </div>
         )}
