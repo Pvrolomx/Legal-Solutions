@@ -1,14 +1,14 @@
 export const brandingConfig = {
   // Toggle between logo and custom name
-  useLogo: false,
+  useLogo: true,
   
   // Logo settings
   logoPath: '/logo.png',
   logoAlt: 'Legal Solutions',
   
   // Custom name settings (for demos)
-  useCustomName: true,
-  customName: 'Lic. Antonio Torres',
+  useCustomName: false,
+  customName: '',
   customSubtitle: 'Despacho Jurídico',
   
   // Tagline shown below logo or name
