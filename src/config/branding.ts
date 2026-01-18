@@ -1,16 +1,9 @@
 export const brandingConfig = {
-  // Toggle between logo and custom name
-  useLogo: true,
-  
-  // Logo settings
+  useLogo: false,
   logoPath: '/logo.png',
   logoAlt: 'Legal Solutions',
-  
-  // Custom name settings (for demos)
-  useCustomName: false,
-  customName: '',
+  useCustomName: true,
+  customName: 'Lic. Mireya Placito Martinez',
   customSubtitle: 'Despacho Jurídico',
-  
-  // Tagline shown below logo or name
   tagline: 'Sistema de Gestión Legal',
 };
