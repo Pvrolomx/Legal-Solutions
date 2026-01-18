@@ -1,9 +1,9 @@
 export const brandingConfig = {
-  useLogo: true,
+  useLogo: false,
   logoPath: '/logo.png',
   logoAlt: 'Legal Solutions',
-  useCustomName: false,
-  customName: '',
+  useCustomName: true,
+  customName: 'Lic. Esteban Vazquez Lomeli',
   customSubtitle: 'Despacho Jurídico',
   tagline: 'Sistema de Gestión Legal',
 };
