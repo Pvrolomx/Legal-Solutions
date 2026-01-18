@@ -215,11 +215,8 @@ export default function HomePage() {
         {/* Quick Links */}
         {!activeSection && (
           <div className="mt-6 flex justify-center gap-3">
-            <Link href="/tareas" className="px-4 py-2 bg-white rounded-xl text-stone-600 font-medium text-sm shadow border border-stone-200 hover:border-amber-300 transition">
-              ✅ Tareas
-            </Link>
-            <Link href="/ai" className="px-4 py-2 bg-white rounded-xl text-stone-600 font-medium text-sm shadow border border-stone-200 hover:border-amber-300 transition">
-              🤖 IA
+            <Link href="/notas" className="px-4 py-2 bg-white rounded-xl text-stone-600 font-medium text-sm shadow border border-stone-200 hover:border-amber-300 transition">
+              📝 Notas
             </Link>
           </div>
 
