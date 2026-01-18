@@ -1,9 +1,9 @@
 export const brandingConfig = {
-  useLogo: false,
+  useLogo: true,
   logoPath: '/logo.png',
   logoAlt: 'Legal Solutions',
-  useCustomName: true,
-  customName: 'Lic. Mireya Placito Martinez',
+  useCustomName: false,
+  customName: '',
   customSubtitle: 'Despacho Jurídico',
   tagline: 'Sistema de Gestión Legal',
 };
