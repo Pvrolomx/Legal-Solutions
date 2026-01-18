@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
 interface ClientDetail {
@@ -20,6 +20,10 @@ interface ClientDetail {
 export default function ClienteDetallePage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
+  const fromCases = searchParams.get('from') === 'casos';
+  const caseId = searchParams.get('caseId');
+  
   const [client, setClient] = useState<ClientDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -62,6 +66,10 @@ export default function ClienteDetallePage() {
     if (res.ok) router.push('/clientes');
   };
 
+  // FIX 2: Determinar URL de regreso
+  const backUrl = fromCases && caseId ? `/casos/${caseId}` : '/clientes';
+  const backLabel = fromCases && caseId ? 'Caso' : 'Clientes';
+
   if (loading) return <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center"><p className="text-slate-400">Cargando...</p></div>;
   if (!client) return <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center"><p className="text-slate-400">Cliente no encontrado</p></div>;
 
@@ -69,8 +77,8 @@ export default function ClienteDetallePage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <header className="pt-6 px-4">
         <div className="max-w-2xl mx-auto">
-          <Link href="/clientes" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition mb-4">
-            <span>←</span> Clientes
+          <Link href={backUrl} className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition mb-4">
+            <span>←</span> {backLabel}
           </Link>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
