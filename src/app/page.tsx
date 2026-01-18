@@ -212,18 +212,18 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Quick Links */}
+        {/* Quick Links & Sync */}
         {!activeSection && (
-          <div className="mt-6 flex justify-center gap-3">
-            <Link href="/notas" className="px-4 py-2 bg-white rounded-xl text-stone-600 font-medium text-sm shadow border border-stone-200 hover:border-amber-300 transition">
-              📝 Notas
-            </Link>
-          </div>
-
-          {/* Sync Manager */}
-          <div className="mt-4">
-            <SyncManager />
-          </div>
+          <>
+            <div className="mt-6 flex justify-center gap-3">
+              <Link href="/notas" className="px-4 py-2 bg-white rounded-xl text-stone-600 font-medium text-sm shadow border border-stone-200 hover:border-amber-300 transition">
+                📝 Notas
+              </Link>
+            </div>
+            <div className="mt-4">
+              <SyncManager />
+            </div>
+          </>
         )}
 
         {/* Footer */}
