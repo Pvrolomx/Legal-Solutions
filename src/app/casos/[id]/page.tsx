@@ -82,11 +82,11 @@ export default function CasoDetallePage() {
     if (res.ok) router.push('/casos');
   };
 
-  if (loading) return <div className="min-h-screen bg-slate-50 flex items-center justify-center"><p>Cargando...</p></div>;
-  if (!caseData) return <div className="min-h-screen bg-slate-50 flex items-center justify-center"><p>Caso no encontrado</p></div>;
+  if (loading) return <div className="min-h-screen bg-stone-100 flex items-center justify-center"><p>Cargando...</p></div>;
+  if (!caseData) return <div className="min-h-screen bg-stone-100 flex items-center justify-center"><p>Caso no encontrado</p></div>;
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-stone-100">
       <header className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between">
@@ -99,10 +99,7 @@ export default function CasoDetallePage() {
             </div>
             <div className="flex gap-2">
               {!editing ? (
-                <>
-                  <button onClick={() => setEditing(true)} className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm">Editar</button>
-                  <Link href={`/ai?caseId=${caseData.id}`} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm">🤖 Consultar IA</Link>
-                </>
+                <button onClick={() => setEditing(true)} className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm">Editar</button>
               ) : (
                 <>
                   <button onClick={handleSave} disabled={saving} className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-sm">
@@ -182,11 +179,6 @@ export default function CasoDetallePage() {
                     <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})}
                       rows={3} className="w-full px-3 py-2 border rounded-lg mt-1" />
                   </div>
-                  <div>
-                    <label className="text-sm text-slate-500">Notas</label>
-                    <textarea value={form.notes} onChange={e => setForm({...form, notes: e.target.value})}
-                      rows={2} className="w-full px-3 py-2 border rounded-lg mt-1" />
-                  </div>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -208,16 +200,15 @@ export default function CasoDetallePage() {
                     <div><p className="text-sm text-slate-500">Abogado</p><p className="font-medium">{caseData.opponentLawyer || '-'}</p></div>
                   </div>
                   {caseData.description && <div><p className="text-sm text-slate-500">Descripción</p><p>{caseData.description}</p></div>}
-                  {caseData.notes && <div><p className="text-sm text-slate-500">Notas</p><p className="text-slate-600">{caseData.notes}</p></div>}
                 </div>
               )}
             </div>
 
-            {/* Audiencias */}
+            {/* Audiencias - FIX 1: Link en vez de button */}
             <div className="bg-white rounded-xl shadow-sm border p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="font-semibold text-lg">📅 Audiencias</h2>
-                <button className="text-blue-600 text-sm font-medium hover:underline">+ Agregar</button>
+                <Link href={`/agenda?caseId=${caseData.id}&action=new`} className="text-blue-600 text-sm font-medium hover:underline">+ Agregar</Link>
               </div>
               {caseData.hearings.length === 0 ? (
                 <p className="text-slate-400 text-center py-4">Sin audiencias programadas</p>
@@ -241,47 +232,41 @@ export default function CasoDetallePage() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Cliente */}
+            {/* Cliente - FIX 2: Query params para navegación de regreso */}
             <div className="bg-white rounded-xl shadow-sm border p-5">
               <h3 className="font-semibold mb-3">👤 Cliente</h3>
               <p className="font-medium text-lg">{caseData.client.name}</p>
               <p className="text-sm text-slate-500">{caseData.client.phone}</p>
               {caseData.client.email && <p className="text-sm text-slate-500">{caseData.client.email}</p>}
-              <Link href={`/clientes/${caseData.client.id}`} className="text-blue-600 text-sm mt-2 inline-block hover:underline">Ver cliente →</Link>
+              <Link href={`/clientes/${caseData.client.id}?from=casos&caseId=${caseData.id}`} className="text-blue-600 text-sm mt-2 inline-block hover:underline">Ver cliente →</Link>
             </div>
 
-            {/* Tareas */}
+            {/* FIX 3: Notas en vez de Tareas */}
             <div className="bg-white rounded-xl shadow-sm border p-5">
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="font-semibold">✅ Tareas</h3>
-                <button className="text-blue-600 text-sm font-medium hover:underline">+ Nueva</button>
-              </div>
-              {caseData.tasks.length === 0 ? (
-                <p className="text-slate-400 text-sm">Sin tareas</p>
+              <h3 className="font-semibold mb-3">📝 Notas</h3>
+              {editing ? (
+                <textarea 
+                  value={form.notes} 
+                  onChange={e => setForm({...form, notes: e.target.value})}
+                  rows={4} 
+                  placeholder="Agregar notas del caso..."
+                  className="w-full px-3 py-2 border rounded-lg text-sm" 
+                />
               ) : (
-                <div className="space-y-2">
-                  {caseData.tasks.map(t => (
-                    <div key={t.id} className="flex items-center gap-2">
-                      <input type="checkbox" checked={t.status === 'completada'} readOnly className="rounded" />
-                      <span className={t.status === 'completada' ? 'line-through text-slate-400' : ''}>{t.title}</span>
-                    </div>
-                  ))}
-                </div>
+                <p className="text-slate-600 text-sm whitespace-pre-wrap">
+                  {caseData.notes || 'Sin notas'}
+                </p>
               )}
             </div>
 
-            {/* Actions */}
-            <div className="bg-white rounded-xl shadow-sm border p-5">
-              <h3 className="font-semibold mb-3">Acciones</h3>
-              <div className="space-y-2">
-                <Link href={`/ai?caseId=${caseData.id}`} className="block w-full text-center py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                  🤖 Consultar IA sobre este caso
-                </Link>
+            {/* FIX 4: Eliminar sección Acciones - Solo mostrar botón eliminar en modo edición */}
+            {editing && (
+              <div className="bg-white rounded-xl shadow-sm border p-5">
                 <button onClick={handleDelete} className="w-full py-2 text-red-600 border border-red-200 rounded-lg hover:bg-red-50">
                   Eliminar caso
                 </button>
               </div>
-            </div>
+            )}
           </div>
         </div>
       
