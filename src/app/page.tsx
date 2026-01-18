@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import LegalAIcon from '@/components/LegalAIcon';
 import EscritosSection from '@/components/EscritosSection';
+import SyncManager from '@/components/SyncManager';
 
 interface Client { id: string; name: string; phone: string; email: string | null; }
 interface Case { id: string; matter: string; caseNumber: string | null; status: string; client: { name: string }; }
@@ -220,6 +221,11 @@ export default function HomePage() {
             <Link href="/ai" className="px-4 py-2 bg-white rounded-xl text-stone-600 font-medium text-sm shadow border border-stone-200 hover:border-amber-300 transition">
               🤖 IA
             </Link>
+          </div>
+
+          {/* Sync Manager */}
+          <div className="mt-4">
+            <SyncManager />
           </div>
         )}
 
