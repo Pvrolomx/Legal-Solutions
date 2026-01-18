@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import DocumentUpload from '@/components/DocumentUpload';
+import DocumentList from '@/components/DocumentList';
 
 interface CaseDetail {
   id: string;
@@ -38,6 +40,7 @@ export default function CasoDetallePage() {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<any>({});
+  const [docRefresh, setDocRefresh] = useState(0);
 
   useEffect(() => { loadCase(); }, [params.id]);
 
@@ -204,7 +207,7 @@ export default function CasoDetallePage() {
               )}
             </div>
 
-            {/* Audiencias - FIX 1: Link en vez de button */}
+            {/* Audiencias */}
             <div className="bg-white rounded-xl shadow-sm border p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="font-semibold text-lg">📅 Audiencias</h2>
@@ -228,11 +231,18 @@ export default function CasoDetallePage() {
                 </div>
               )}
             </div>
+
+            {/* Documentos Locales (IndexedDB) */}
+            <div className="bg-white rounded-xl shadow-sm border p-6">
+              <h2 className="font-semibold text-lg mb-4">📎 Documentos Locales</h2>
+              <DocumentUpload caseId={caseData.id} onUpload={() => setDocRefresh(prev => prev + 1)} />
+              <DocumentList caseId={caseData.id} refreshTrigger={docRefresh} />
+            </div>
           </div>
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Cliente - FIX 2: Query params para navegación de regreso */}
+            {/* Cliente */}
             <div className="bg-white rounded-xl shadow-sm border p-5">
               <h3 className="font-semibold mb-3">👤 Cliente</h3>
               <p className="font-medium text-lg">{caseData.client.name}</p>
@@ -241,7 +251,7 @@ export default function CasoDetallePage() {
               <Link href={`/clientes/${caseData.client.id}?from=casos&caseId=${caseData.id}`} className="text-blue-600 text-sm mt-2 inline-block hover:underline">Ver cliente →</Link>
             </div>
 
-            {/* FIX 3: Notas en vez de Tareas */}
+            {/* Notas */}
             <div className="bg-white rounded-xl shadow-sm border p-5">
               <h3 className="font-semibold mb-3">📝 Notas</h3>
               {editing ? (
@@ -259,7 +269,7 @@ export default function CasoDetallePage() {
               )}
             </div>
 
-            {/* FIX 4: Eliminar sección Acciones - Solo mostrar botón eliminar en modo edición */}
+            {/* Eliminar - solo en modo edición */}
             {editing && (
               <div className="bg-white rounded-xl shadow-sm border p-5">
                 <button onClick={handleDelete} className="w-full py-2 text-red-600 border border-red-200 rounded-lg hover:bg-red-50">
