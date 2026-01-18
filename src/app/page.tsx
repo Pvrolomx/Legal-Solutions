@@ -5,6 +5,7 @@ import Link from 'next/link';
 import LegalAIcon from '@/components/LegalAIcon';
 import EscritosSection from '@/components/EscritosSection';
 import SyncManager from '@/components/SyncManager';
+import BrandingHeader from '@/components/BrandingHeader';
 
 interface Client { id: string; name: string; phone: string; email: string | null; }
 interface Case { id: string; matter: string; caseNumber: string | null; status: string; client: { name: string }; }
@@ -43,9 +44,8 @@ export default function HomePage() {
     <div className="min-h-screen bg-stone-100">
       {/* Header */}
       <header className="bg-white border-b border-stone-200 pt-6 pb-4 px-6">
-        <div className="max-w-lg mx-auto text-center">
-          <img src="/logo.png" alt="Legal Solutions" className="h-20 mx-auto mb-2" />
-          <p className="text-stone-500 text-sm">Sistema de Gestión Legal</p>
+        <div className="max-w-lg mx-auto">
+          <BrandingHeader />
         </div>
       </header>
 
