@@ -73,8 +73,8 @@ export default function SyncManager() {
   };
 
   return (
-    <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-4 border border-white/10">
-      <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
+    <div className="bg-white rounded-2xl p-4 shadow-lg border border-stone-200">
+      <h3 className="font-semibold text-stone-800 mb-3 flex items-center gap-2">
         🔄 Sincronización
       </h3>
       
@@ -102,12 +102,12 @@ export default function SyncManager() {
       </div>
 
       {message && (
-        <p className={`mt-2 text-sm ${message.type === 'success' ? 'text-green-400' : 'text-red-400'}`}>
+        <p className={`mt-2 text-sm ${message.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
           {message.text}
         </p>
       )}
       
-      <p className="text-xs text-slate-500 mt-2">
+      <p className="text-xs text-stone-400 mt-2">
         Exporta en PC, importa en celular
       </p>
     </div>
